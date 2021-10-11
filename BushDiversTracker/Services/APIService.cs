@@ -112,14 +112,10 @@ namespace BushDiversTracker.Services
             }
         }
 
-        public async Task<bool> CancelTrackingAsync(String pirepId)
+        public async Task<bool> CancelTrackingAsync()
         {
             AddHeaders();
-            var pirep = new PirepCancellation
-            {
-                PirepId = pirepId
-            };
-            HttpResponseMessage res = await _http.PostAsJsonAsync($"{baseUrl}/pirep/reset", pirep);
+            HttpResponseMessage res = await _http.GetAsync($"{baseUrl}/pirep/reset");
             if (res.StatusCode == HttpStatusCode.OK)
             {
                 return true;

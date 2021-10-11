@@ -56,6 +56,7 @@ namespace BushDiversTracker
         protected bool bDispatch = false;
         private bool bConnected = false;
         private bool bFlightTracking = false;
+        private bool bEndFlight = false;
         private bool bReady = false;
         private bool flag = false;
         private bool bFlightCompleted = false;
@@ -339,6 +340,7 @@ namespace BushDiversTracker
                     startFuelQty = data1.fuel_qty;
                     flightStatus = Convert.ToInt32(PirepStatusType.BOARDING);
                     lblStatusText.Text = "Pre-flight|Loading";
+                    btnEndFlight.Visibility = Visibility.Visible;
                     SendTextToSim("Bush Tracker Status: Pre-Flight - Ready");
                 }
 
@@ -358,26 +360,36 @@ namespace BushDiversTracker
                     SendTextToSim("Bush Tracker Status: Landed");
                 }
 
-                // check for end of flight
-                if (!flag && this.bLastEngineStatus && Convert.ToBoolean(data1.on_ground))
+                if (bEndFlight)
                 {
-                    bFlightCompleted = true;
-                    bFlightTracking = false;
-                    flightStatus = Convert.ToInt32(PirepStatusType.ARRIVED);
-                    lblStatusText.Text = "Flight ended";
-                    SendTextToSim("Bush Tracker Status: Flight ended - Thanks for working with Bush Divers");
+                    if (!flag && Convert.ToBoolean(data1.on_ground))
+                    {
+                        bFlightCompleted = true;
+                        bFlightTracking = false;
+                        flightStatus = Convert.ToInt32(PirepStatusType.ARRIVED);
+                        lblStatusText.Text = "Flight ended";
+                        SendTextToSim("Bush Tracker Status: Flight ended - Thanks for working with Bush Divers");
 
-                    endFuelQty = data1.fuel_qty;
-                    endLat = data1.latitude;
-                    endLon = data1.longitude;
-                    endTime = HelperService.SetZuluTime(data1.zulu_time).ToString("yyyy-MM-dd HH:mm:ss");
-                    landingRate = data1.touchdown_velocity;
+                        endFuelQty = data1.fuel_qty;
+                        endLat = data1.latitude;
+                        endLon = data1.longitude;
+                        endTime = HelperService.SetZuluTime(data1.zulu_time).ToString("yyyy-MM-dd HH:mm:ss");
+                        landingRate = data1.touchdown_velocity;
 
-                    // btnStop.Visibility = Visibility.Visible;
-                    btnSubmit.Visibility = Visibility.Visible;
+                        // btnStop.Visibility = Visibility.Visible;
+                        btnSubmit.IsEnabled = true;
 
-                    this.bLastEngineStatus = flag;
+                        this.bLastEngineStatus = flag;
+                        bEndFlight = false;
+                        btnEndFlight.IsEnabled = false;
+                    } else
+                    {
+                        MessageBox.Show("You must be on the ground with engines off to end your flight", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        bEndFlight = false;
+                        btnEndFlight.IsEnabled = true;
+                    }
                 }
+                
 
                 // Send data to api
                 var headingChanged = HelperService.CheckForHeadingChange(lastHeading, data1.heading_m);
@@ -422,8 +434,8 @@ namespace BushDiversTracker
             }
             catch (COMException ex)
             {
-                //TODO: handle exception
-
+                HelperService.WriteToLog($"Issue connecting to sim: {ex.Message}");
+                lblErrorText.Text = $"Issue connecting to sim: {ex.Message}";
             }
         }
 
@@ -450,7 +462,8 @@ namespace BushDiversTracker
             }
             catch (COMException ex)
             {
-                Console.WriteLine(ex.Message);
+                HelperService.WriteToLog($"Issue getting update from sim: {ex.Message}");
+                lblErrorText.Text = $"Issue getting update from sim: {ex.Message}";
             }
         }
 
@@ -475,12 +488,36 @@ namespace BushDiversTracker
             await _api.PostFlightLogAsync(log);
         }
 
-        public async Task<bool> EndFlight()
+        public async void EndFlight()
         {
             // check distance
             var distance = HelperService.CalculateDistance(Convert.ToDouble(txtArrLat.Text), Convert.ToDouble(txtArrLon.Text), endLat, endLon, true);
-            if (distance > 2) return false;
+            if (distance > 2)
+            {
+                // get nearest airport and update pirep destination (return icao)
+                var req = new NewLocationRequest
+                {
+                    Lat = endLat,
+                    Lon = endLon,
+                    PirepId = txtPirep.Text
+                };
 
+                try
+                {
+                    var newLocation = await _api.PostNewLocationAsync(req);
+
+                    // update labels (destination icao)
+                    txtArrLat.Text = endLat.ToString();
+                    txtArrLon.Text = endLon.ToString();
+                    txtArrival.Text = newLocation.Icao;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error finding alternate airport", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
+                    lblErrorText.Text = ex.Message;
+                }
+            }
+            
             var pirep = new Pirep()
             {
                 PirepId = txtPirep.Text,
@@ -490,10 +527,16 @@ namespace BushDiversTracker
                 BlockOffTime = startTime,
                 BlockOnTime = endTime
             };
-
-            await _api.PostPirepAsync(pirep);
-
-            return true;
+                        
+            var res = await _api.PostPirepAsync(pirep);
+            if (res)
+            {
+                TidyUpAfterPirepSubmission();
+            } else
+            {
+                MessageBox.Show("Pirep Not Submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            
         }
 
         public void SendTextToSim(string text)
@@ -527,50 +570,7 @@ namespace BushDiversTracker
 
         private async void btnSubmit_Click(object sender, RoutedEventArgs e)
         {
-            var res = await EndFlight();
-
-            if (!res)
-            {
-                MessageBoxResult msgResult;
-                msgResult = MessageBox.Show("You are not at the planned destination, would you like to submit pirep for current location?", "Bush Tracker", MessageBoxButton.YesNo, MessageBoxImage.Information);
-                if (msgResult == MessageBoxResult.Yes)
-                {
-                    // get nearest airport and update pirep destination (return icao)
-                    var req = new NewLocationRequest
-                    {
-                        Lat = endLat,
-                        Lon = endLon,
-                        PirepId = txtPirep.Text
-                    };
-                    
-                    try
-                    {
-                        var newLocation = await _api.PostNewLocationAsync(req);
-
-                        // update labels (destination icao)
-                        txtArrLat.Text = endLat.ToString();
-                        txtArrLon.Text = endLon.ToString();
-                        txtArrival.Text = newLocation.Icao;
-
-                        await EndFlight();
-                        TidyUpAfterPirepSubmission();
-                    } catch (Exception ex)
-                    {
-                        MessageBox.Show("Error finding alternate airport", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
-                        lblErrorText.Text = ex.Message;
-                    }
-                    
-
-                } else
-                {
-                    lblErrorText.Text = "You are not at the required destination";
-                    btnSubmit.Visibility = Visibility.Hidden;
-                }
-                
-            } else
-            {
-                TidyUpAfterPirepSubmission();
-            }
+            EndFlight();
         }
 
         private void btnStop_Click(object sender, RoutedEventArgs e)
@@ -581,22 +581,32 @@ namespace BushDiversTracker
         private void btnConnect_Click(object sender, RoutedEventArgs e)
         {
             OpenConnection();
-            btnConnect.IsEnabled = false;
+            if (bConnected)
+            {
+                btnConnect.IsEnabled = false;
+            }
         }
 
-#endregion
+        private void btnEndFlight_Click(object sender, RoutedEventArgs e)
+        {
+            btnEndFlight.IsEnabled = false;
+            bEndFlight = true;
+        }
+
+        #endregion
 
 
-#region Helper_methods
+        #region Helper_methods
 
         protected void TidyUpAfterPirepSubmission()
         {
             btnStop.Visibility = Visibility.Collapsed;
-            MessageBox.Show("Pirep submitted!", "Bush Divers Tracker", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("Pirep submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Information);
             ClearVariables();
             btnSubmit.Visibility = Visibility.Hidden;
             btnStop.Visibility = Visibility.Collapsed;
             btnStart.Visibility = Visibility.Visible;
+            btnEndFlight.Visibility = Visibility.Hidden;
             btnStart.IsEnabled = false;
             FetchDispatch();
         }
@@ -628,11 +638,11 @@ namespace BushDiversTracker
             ClearVariables();
 
             // reset pirep to draft and remove any logs
-            var res = await _api.CancelTrackingAsync(txtPirep.Text);
+            var res = await _api.CancelTrackingAsync();
             if (res)
             {
                 lblStatusText.Text = "Tracking Stopped";
-                btnStop.Visibility = Visibility.Collapsed;
+                btnStop.Visibility = Visibility.Hidden;
                 btnStart.Visibility = Visibility.Visible;
                 btnStart.IsEnabled = true;
             }
@@ -678,10 +688,11 @@ namespace BushDiversTracker
             //    status = false;
             //}
             // check fuel qty matches planned fuel
-            var max = Convert.ToDouble(txtFuel.Text) + 5;
-            var min = Convert.ToDouble(txtFuel.Text) - 5;
-
-            if (data.Fuel >= max && data.Fuel <= min)
+            var maxVal = Convert.ToDouble(txtFuel.Text) + 5;
+            var minVal = Convert.ToDouble(txtFuel.Text) - 5;
+            //var isFuelValid = Enumerable.Range(Convert.ToInt32(minVal), Convert.ToInt32(maxVal)).Contains(Convert.ToInt32(data.Fuel));
+            //if (data.Fuel <= max && data.Fuel >= min)
+            if (!(minVal <= data.Fuel) || !(data.Fuel <= maxVal))
             {
                 // set error text for fuel
                 lblFuelError.Content = "Fuel does not match";
@@ -764,9 +775,6 @@ namespace BushDiversTracker
                 }
             }
         }
-
-#endregion
-
-      
+        #endregion
     }
 }

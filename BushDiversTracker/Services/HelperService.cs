@@ -74,5 +74,11 @@ namespace BushDiversTracker.Services
                 w.WriteLine("-------------");
             }
         }
+
+        public static async void CancelFlightOnExit()
+        {
+            var _api = new APIService();
+            await _api.CancelTrackingAsync();
+        }
     }
 }
