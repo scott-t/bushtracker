@@ -1,0 +1,17 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace BushDiversTracker.Models.Enums
+{
+    enum PirepStatusType
+    {
+        BOARDING = 1,
+        DEPARTED = 2,
+        CRUISE = 3,
+        APPROACH = 4,
+        ARRIVED = 5
+    }
+}
