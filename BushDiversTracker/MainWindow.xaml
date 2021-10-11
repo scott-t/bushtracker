@@ -11,8 +11,8 @@
             <ColumnDefinition/>
             <ColumnDefinition Width="0*"/>
         </Grid.ColumnDefinitions>
-        <TextBox x:Name="txtKey" HorizontalAlignment="Left" Padding="5" Margin="10,28,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="434" Height="28"/>
-        <Label x:Name="label" Content="API Key" HorizontalAlignment="Left" Margin="10,2,0,0" VerticalAlignment="Top" Height="26" Width="50"/>
+        <TextBox x:Name="txtKey" HorizontalAlignment="Left" Padding="5" Margin="10,44,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="434" Height="28"/>
+        <Label x:Name="label" Content="API Key" HorizontalAlignment="Left" Margin="10,18,0,0" VerticalAlignment="Top" Height="26" Width="50"/>
         <Button x:Name="btnFetchBookings" Click="btnFetchBookings_Click"  Content="Fetch Dispatch" Padding="5" Margin="585,28,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="100"/>
         <StatusBar Margin="0,427,0,0">
             <StatusBarItem HorizontalAlignment="Left">
@@ -63,5 +63,6 @@
         <Label x:Name="lblFetch" Content="fetching..." Visibility="Hidden" HorizontalAlignment="Left" Margin="593,55,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="53"/>
         <Button x:Name="btnSubmit" Click="btnSubmit_Click" IsEnabled="True" Visibility="Hidden" Content="Submit Pirep" Padding="5" Margin="696,183,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="92"/>
         <Label x:Name="lblStart" Content="Checking info..." Visibility="Hidden" HorizontalAlignment="Left" Margin="697,55,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="71"/>
+        <Label x:Name="lblVersion" Content="" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" Height="26" Width="50" RenderTransformOrigin="0.46,0.117" FontSize="8"/>
     </Grid>
 </Window>

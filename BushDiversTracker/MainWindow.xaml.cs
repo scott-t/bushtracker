@@ -21,6 +21,8 @@ using System.Windows.Threading;
 using System.Windows.Interop;
 using BushDiversTracker.Models.NonApi;
 using System.Globalization;
+using AutoUpdaterDotNET;
+using System.Reflection;
 
 namespace BushDiversTracker
 {
@@ -36,9 +38,15 @@ namespace BushDiversTracker
             InitializeComponent();
             txtKey.Text = Properties.Settings.Default.Key;
             _api = new APIService();
+            if (!System.Diagnostics.Debugger.IsAttached)
+            {
+                AutoUpdater.Start("https://storage.googleapis.com/bush-divers.appspot.com/bushtracker-info.xml");
+            }
+            var version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            lblVersion.Content = version;
         }
 
-        #region Sim_Connect
+#region Sim_Connect
 
         CultureInfo Eng = CultureInfo.GetCultureInfo("en-GB");
 
@@ -493,9 +501,9 @@ namespace BushDiversTracker
             simConnect.Text(SIMCONNECT_TEXT_TYPE.PRINT_BLACK, 5, SIMCONNECT_EVENT_FLAG.DEFAULT, text);
         }
 
-        #endregion
+#endregion
 
-        #region Form_Iteraction
+#region Form_Iteraction
 
         private void btnFetchBookings_Click(object sender, RoutedEventArgs e)
         {
@@ -576,10 +584,10 @@ namespace BushDiversTracker
             btnConnect.IsEnabled = false;
         }
 
-        #endregion
+#endregion
 
 
-        #region Helper_methods
+#region Helper_methods
 
         protected void TidyUpAfterPirepSubmission()
         {
@@ -757,7 +765,7 @@ namespace BushDiversTracker
             }
         }
 
-        #endregion
+#endregion
 
       
     }
