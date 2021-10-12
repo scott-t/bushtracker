@@ -74,6 +74,10 @@ namespace BushDiversTracker
         protected double lastHeading;
         protected double lastAltitude;
         protected double landingRate;
+        protected double landingBank;
+        protected double landingPitch;
+        protected double landingLat;
+        protected double landingLon;
         protected double lastVs;
         protected DateTime dataLastSent;
 
@@ -340,7 +344,6 @@ namespace BushDiversTracker
                     startFuelQty = data1.fuel_qty;
                     flightStatus = Convert.ToInt32(PirepStatusType.BOARDING);
                     lblStatusText.Text = "Pre-flight|Loading";
-                    btnEndFlight.Visibility = Visibility.Visible;
                     SendTextToSim("Bush Tracker Status: Pre-Flight - Ready");
                 }
 
@@ -349,6 +352,7 @@ namespace BushDiversTracker
                 {
                     flightStatus = Convert.ToInt32(PirepStatusType.DEPARTED);
                     lblStatusText.Text = "Departed";
+                    
                     SendTextToSim("Bush Tracker Status: Departed - Have a good flight!");
                 }
 
@@ -357,6 +361,7 @@ namespace BushDiversTracker
                 {
                     flightStatus = Convert.ToInt32(PirepStatusType.APPROACH);
                     lblStatusText.Text = "Landed";
+                    btnEndFlight.IsEnabled = true;
                     SendTextToSim("Bush Tracker Status: Landed");
                 }
 
@@ -375,18 +380,24 @@ namespace BushDiversTracker
                         endLon = data1.longitude;
                         endTime = HelperService.SetZuluTime(data1.zulu_time).ToString("yyyy-MM-dd HH:mm:ss");
                         landingRate = data1.touchdown_velocity;
+                        landingPitch = data1.touchdown_pitch;
+                        landingBank = data1.touchdown_bank;
+                        landingLat = data1.touchdown_lat;
+                        landingLon = data1.touchdown_lon;
 
                         // btnStop.Visibility = Visibility.Visible;
                         btnSubmit.IsEnabled = true;
 
-                        this.bLastEngineStatus = flag;
+                        bLastEngineStatus = flag;
                         bEndFlight = false;
                         btnEndFlight.IsEnabled = false;
+                        lblEnd.Visibility = Visibility.Hidden;
                     } else
                     {
                         MessageBox.Show("You must be on the ground with engines off to end your flight", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Warning);
                         bEndFlight = false;
                         btnEndFlight.IsEnabled = true;
+                        lblEnd.Visibility = Visibility.Hidden;
                     }
                 }
                 
@@ -405,7 +416,7 @@ namespace BushDiversTracker
                     dataLastSent = DateTime.UtcNow;
                 }
 
-                this.bLastEngineStatus = flag;
+                bLastEngineStatus = flag;
 
                 lastAltitude = data1.indicated_altitude;
                 lastHeading = data1.heading_m;
@@ -517,13 +528,16 @@ namespace BushDiversTracker
                     lblErrorText.Text = ex.Message;
                 }
             }
-            
+
             var pirep = new Pirep()
             {
                 PirepId = txtPirep.Text,
                 FuelUsed = startFuelQty - endFuelQty,
-                Distance = 0,
                 LandingRate = landingRate,
+                TouchDownLat = landingLat,
+                TouchDownLon = landingLon,
+                TouchDownBank = landingBank,
+                TouchDownPitch = landingPitch,
                 BlockOffTime = startTime,
                 BlockOnTime = endTime
             };
@@ -531,6 +545,7 @@ namespace BushDiversTracker
             var res = await _api.PostPirepAsync(pirep);
             if (res)
             {
+                MessageBox.Show("Pirep submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Information);
                 TidyUpAfterPirepSubmission();
             } else
             {
@@ -590,6 +605,7 @@ namespace BushDiversTracker
         private void btnEndFlight_Click(object sender, RoutedEventArgs e)
         {
             btnEndFlight.IsEnabled = false;
+            lblEnd.Visibility = Visibility.Visible;
             bEndFlight = true;
         }
 
@@ -600,13 +616,12 @@ namespace BushDiversTracker
 
         protected void TidyUpAfterPirepSubmission()
         {
-            btnStop.Visibility = Visibility.Collapsed;
-            MessageBox.Show("Pirep submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Information);
+            btnStop.Visibility = Visibility.Hidden;
+            
             ClearVariables();
-            btnSubmit.Visibility = Visibility.Hidden;
-            btnStop.Visibility = Visibility.Collapsed;
+            btnSubmit.IsEnabled = false;
             btnStart.Visibility = Visibility.Visible;
-            btnEndFlight.Visibility = Visibility.Hidden;
+            btnEndFlight.IsEnabled = false;
             btnStart.IsEnabled = false;
             FetchDispatch();
         }
@@ -615,6 +630,7 @@ namespace BushDiversTracker
         {
             bDispatch = false;
             bReady = false;
+            bEndFlight = false;
             bFlightCompleted = false;
             bFirstData = true;
             bLastEngineStatus = false;
@@ -645,6 +661,7 @@ namespace BushDiversTracker
                 btnStop.Visibility = Visibility.Hidden;
                 btnStart.Visibility = Visibility.Visible;
                 btnStart.IsEnabled = true;
+                btnEndFlight.IsEnabled = false;
             }
             else
             {

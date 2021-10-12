@@ -71,7 +71,7 @@
         <Label x:Name="lblStart" Content="checking info..." Visibility="Hidden" HorizontalAlignment="Left" Margin="10,275,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="99"/>
         <Label x:Name="lblVersion" Content="" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" Height="26" Width="50" RenderTransformOrigin="0.46,0.117" FontSize="8"/>
         <Label x:Name="lblConnectStatus" Content="MSFS Connection Status:" HorizontalAlignment="Left" Margin="583,1,0,0" VerticalAlignment="Top"/>
-        <Button x:Name="btnEndFlight" Click="btnEndFlight_Click" Padding="5" Visibility="Hidden" Content="I Have Arrived" HorizontalAlignment="Left" Margin="10,303,0,0" VerticalAlignment="Top" Width="99"/>
+        <Button x:Name="btnEndFlight" Click="btnEndFlight_Click" Padding="5" Visibility="Visible" IsEnabled="False" Content="I Have Arrived" HorizontalAlignment="Left" Margin="10,303,0,0" VerticalAlignment="Top" Width="99"/>
         <Label x:Name="lblEnd" Content="checking status..." Visibility="Hidden" HorizontalAlignment="Left" Margin="10,336,0,0" VerticalAlignment="Top" Width="99" FontSize="10"/>
     </Grid>
 </Window>
