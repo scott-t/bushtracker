@@ -71,6 +71,7 @@ namespace BushDiversTracker
         private double currentDistance = 0;
         private double startFuelQty;
         private double endFuelQty;
+        private double currentFuelQty;
         private string startTime;
         private string endTime;
         protected int flightStatus;
@@ -302,6 +303,14 @@ namespace BushDiversTracker
                 // check if in a state to start flight tracking
                 if (!bReady)
                 {
+                    // check if unlimited fuel is turned on
+                    if (data1.is_unlimited == 1)
+                    {
+                        MessageBox.Show("Please turn off unlimited fuel", "Bush Tracker", MessageBoxButton.OK);
+                        bReady = false;
+                        lblStart.Visibility = Visibility.Collapsed;
+                        return;
+                    }
                     var startCheckStructure = new CheckStructure
                     {
                         Aircraft = data1.title,
@@ -423,7 +432,6 @@ namespace BushDiversTracker
                 lastAltitude = data1.indicated_altitude;
                 lastHeading = data1.heading_m;
                 lastVs = data1.vspeed;
-                
 
                 // calculate cumulative distance
                 if (!bFirstData)
@@ -670,6 +678,7 @@ namespace BushDiversTracker
             lastAltitude = 0;
             // stop simconnect tracking
             bFlightTracking = false;
+            currentFuelQty = 0;
         }
 
         private async void StopTracking()
@@ -728,6 +737,8 @@ namespace BushDiversTracker
             //    lblAircraftError.Visibility = Visibility.Visible;
             //    status = false;
             //}
+
+
             // check fuel qty matches planned fuel
             var maxVal = Convert.ToDouble(txtFuel.Text) + 5;
             var minVal = Convert.ToDouble(txtFuel.Text) - 5;
