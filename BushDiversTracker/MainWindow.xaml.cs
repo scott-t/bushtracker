@@ -98,6 +98,12 @@ namespace BushDiversTracker
             REQUEST_1,
         }
 
+        //enum EVENT_ID
+        //{
+        //    EVENT_PAUSED,
+        //    EVENT_UNPAUSED,
+        //}
+
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
         public struct Struct1
         {
@@ -289,6 +295,21 @@ namespace BushDiversTracker
             simConnect = null;
         }
 
+        //private void simconnect_OnRecvEvent(SimConnect sender, SIMCONNECT_RECV_EVENT recEvent)
+        //{
+        //    Console.WriteLine("Event received");
+        //    switch (recEvent.uEventID)
+        //    {
+        //        case (uint)EVENT_ID.EVENT_PAUSED:
+        //            Console.WriteLine("Paused");
+        //            break;
+        //        case (uint)EVENT_ID.EVENT_UNPAUSED:
+        //            Console.WriteLine("Unpaused");
+        //            break;
+        //    }
+
+        //}
+
         private void simConnect_OnRecvSimobjectDataBytype(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE data)
         {
             if (data.dwRequestID == 0U)
@@ -349,7 +370,8 @@ namespace BushDiversTracker
                 {
                     startLat = data1.latitude;
                     startLon = data1.longitude;
-                    startTime = HelperService.SetZuluTime(data1.zulu_time).ToString("yyyy-MM-dd HH:mm:ss");
+                    // startTime = HelperService.SetZuluTime(data1.zulu_time).ToString("yyyy-MM-dd HH:mm:ss");
+                    startTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
                     startFuelQty = data1.fuel_qty;
                     flightStatus = Convert.ToInt32(PirepStatusType.BOARDING);
                     lblStatusText.Text = "Pre-flight|Loading";
@@ -389,7 +411,8 @@ namespace BushDiversTracker
                         endFuelQty = data1.fuel_qty;
                         endLat = data1.latitude;
                         endLon = data1.longitude;
-                        endTime = HelperService.SetZuluTime(data1.zulu_time).ToString("yyyy-MM-dd HH:mm:ss");
+                        // endTime = HelperService.SetZuluTime(data1.zulu_time).ToString("yyyy-MM-dd HH:mm:ss");
+                        endTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
                         landingRate = data1.touchdown_velocity;
                         landingPitch = data1.touchdown_pitch;
                         landingBank = data1.touchdown_bank;
@@ -454,8 +477,12 @@ namespace BushDiversTracker
                 GetHWinSource().AddHook(new HwndSourceHook(WndProc));
 
                 simConnect = new SimConnect("Managed Data Request", GetHWinSource().Handle, WM_USER_SIMCONNECT, null, 0);
+                //simConnect.SubscribeToSystemEvent(EVENT_ID.EVENT_PAUSED, "Paused");
+                //simConnect.SubscribeToSystemEvent(EVENT_ID.EVENT_UNPAUSED, "Unpaused");
                 simConnect.OnRecvOpen += new SimConnect.RecvOpenEventHandler(simConnect_OnRecvOpen);
                 simConnect.OnRecvQuit += new SimConnect.RecvQuitEventHandler(simconnect_OnRecvQuit);
+                //simConnect.OnRecvEvent += new SimConnect.RecvEventEventHandler(simconnect_OnRecvEvent);
+                
                 initDataRequest();
 
                 bConnected = true;
@@ -477,6 +504,8 @@ namespace BushDiversTracker
         {
             if (simConnect != null)
             {
+                //simConnect.UnsubscribeFromSystemEvent(EVENT_ID.EVENT_PAUSED);
+                //simConnect.UnsubscribeFromSystemEvent(EVENT_ID.EVENT_UNPAUSED);
                 simConnect.Dispose();
                 simConnect = null;
             }
