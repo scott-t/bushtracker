@@ -27,5 +27,7 @@ namespace BushDiversTracker.Models
         public string BlockOffTime { get; set; }
         [JsonPropertyName("block_on_time")]
         public string BlockOnTime { get; set; }
+        [JsonPropertyName("distance")]
+        public double Distance { get; set; }
     }
 }

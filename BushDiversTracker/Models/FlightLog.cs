@@ -15,8 +15,6 @@ namespace BushDiversTracker.Models
         public double Lat { get; set; }
         [JsonPropertyName("lon")]
         public double Lon { get; set; }
-        [JsonPropertyName("distance")]
-        public int Distance { get; set; }
         [JsonPropertyName("heading")]
         public int Heading { get; set; }
         [JsonPropertyName("altitude")]
@@ -33,5 +31,7 @@ namespace BushDiversTracker.Models
         public DateTime SimTime { get; set; }
         [JsonPropertyName("zulu_time")]
         public DateTime ZuluTime { get; set; }
+        [JsonPropertyName("distance")]
+        public double Distance { get; set; }
     }
 }

@@ -66,6 +66,9 @@ namespace BushDiversTracker
         private double startLon;
         private double endLat;
         private double endLon;
+        private double lastLat;
+        private double lastLon;
+        private double currentDistance = 0;
         private double startFuelQty;
         private double endFuelQty;
         private string startTime;
@@ -81,7 +84,7 @@ namespace BushDiversTracker
         protected double lastVs;
         protected DateTime dataLastSent;
 
-        // sim connect setup
+        // sim connect setup variables
         SimConnect simConnect = null;
         const int WM_USER_SIMCONNECT = 0x0402;
 
@@ -97,7 +100,7 @@ namespace BushDiversTracker
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
         public struct Struct1
         {
-            // this is how you declare a fixed size string
+            // variables to bind to simconnect simvars
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
             public string title;
             public double latitude;
@@ -151,8 +154,6 @@ namespace BushDiversTracker
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 8)]
             public string atcModel;
             public double total_weight;
-
-
         };
 
         protected HwndSource GetHWinSource() => PresentationSource.FromVisual((Visual)this) as HwndSource;
@@ -298,6 +299,7 @@ namespace BushDiversTracker
                 if (!bFlightTracking)
                     return;
 
+                // check if in a state to start flight tracking
                 if (!bReady)
                 {
                     var startCheckStructure = new CheckStructure
@@ -333,8 +335,6 @@ namespace BushDiversTracker
                     bFirstData = false;
                 }
 
-
-
                 // Checks for start of flight and sets offblocks time
                 if (flag && Convert.ToBoolean(data1.on_ground) && !bLastEngineStatus)
                 {
@@ -365,8 +365,10 @@ namespace BushDiversTracker
                     SendTextToSim("Bush Tracker Status: Landed");
                 }
 
+                // check if user wants to end flight
                 if (bEndFlight)
                 {
+                    // only end flight if on ground with engines off
                     if (!flag && Convert.ToBoolean(data1.on_ground))
                     {
                         bFlightCompleted = true;
@@ -405,7 +407,7 @@ namespace BushDiversTracker
                 // Send data to api
                 var headingChanged = HelperService.CheckForHeadingChange(lastHeading, data1.heading_m);
                 var altChanged = HelperService.CheckForAltChange(lastAltitude, data1.indicated_altitude);
-
+                // determine if data has changed or not
                 if (headingChanged || altChanged)
                 {
                     SendFlightLog(data1);
@@ -421,6 +423,19 @@ namespace BushDiversTracker
                 lastAltitude = data1.indicated_altitude;
                 lastHeading = data1.heading_m;
                 lastVs = data1.vspeed;
+                
+
+                // calculate cumulative distance
+                if (!bFirstData)
+                {
+                    // calc distance
+                    var d = HelperService.CalculateDistance(lastLat, lastLon, data1.latitude, data1.longitude);
+                    currentDistance += d;
+                    lblDistance.Content = currentDistance.ToString("0.##");
+                }
+
+                lastLat = data1.latitude;
+                lastLon = data1.longitude;
             }
         }
 
@@ -485,7 +500,6 @@ namespace BushDiversTracker
                 PirepId = txtPirep.Text,
                 Lat = d.latitude,
                 Lon = d.longitude,
-                Distance = 0,
                 Heading = Convert.ToInt32(d.heading_m),
                 Altitude = Convert.ToInt32(d.indicated_altitude),
                 IndicatedSpeed = Convert.ToInt32(d.airspeed_indicated),
@@ -493,7 +507,8 @@ namespace BushDiversTracker
                 FuelFlow = d.fuel_flow,
                 VS = d.vspeed,
                 SimTime = HelperService.SetZuluTime(d.local_time),
-                ZuluTime = HelperService.SetZuluTime(d.zulu_time)
+                ZuluTime = HelperService.SetZuluTime(d.zulu_time),
+                Distance = currentDistance
             };
 
             await _api.PostFlightLogAsync(log);
@@ -539,7 +554,8 @@ namespace BushDiversTracker
                 TouchDownBank = landingBank,
                 TouchDownPitch = landingPitch,
                 BlockOffTime = startTime,
-                BlockOnTime = endTime
+                BlockOnTime = endTime,
+                Distance = currentDistance
             };
                         
             var res = await _api.PostPirepAsync(pirep);
@@ -581,6 +597,8 @@ namespace BushDiversTracker
             }
 
             bFlightTracking = true;
+            lblDistanceLabel.Visibility = Visibility.Visible;
+            lblDistance.Visibility = Visibility.Visible;
         }
 
         private async void btnSubmit_Click(object sender, RoutedEventArgs e)
@@ -623,6 +641,8 @@ namespace BushDiversTracker
             btnStart.Visibility = Visibility.Visible;
             btnEndFlight.IsEnabled = false;
             btnStart.IsEnabled = false;
+            lblDistanceLabel.Visibility = Visibility.Hidden;
+            lblDistance.Visibility = Visibility.Hidden;
             FetchDispatch();
         }
 
@@ -638,6 +658,9 @@ namespace BushDiversTracker
             startLon = 0;
             endLat = 0;
             endLon = 0;
+            lastLat = 0;
+            lastLon = 0;
+            currentDistance = 0;
             startFuelQty = 0;
             endFuelQty = 0;
             startTime = "";
@@ -652,7 +675,8 @@ namespace BushDiversTracker
         private async void StopTracking()
         {
             ClearVariables();
-
+            lblDistance.Visibility = Visibility.Hidden;
+            lblDistanceLabel.Visibility = Visibility.Hidden;
             // reset pirep to draft and remove any logs
             var res = await _api.CancelTrackingAsync();
             if (res)

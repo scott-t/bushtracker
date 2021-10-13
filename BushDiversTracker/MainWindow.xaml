@@ -73,5 +73,7 @@
         <Label x:Name="lblConnectStatus" Content="MSFS Connection Status:" HorizontalAlignment="Left" Margin="583,1,0,0" VerticalAlignment="Top"/>
         <Button x:Name="btnEndFlight" Click="btnEndFlight_Click" Padding="5" Visibility="Visible" IsEnabled="False" Content="I Have Arrived" HorizontalAlignment="Left" Margin="10,303,0,0" VerticalAlignment="Top" Width="99"/>
         <Label x:Name="lblEnd" Content="checking status..." Visibility="Hidden" HorizontalAlignment="Left" Margin="10,336,0,0" VerticalAlignment="Top" Width="99" FontSize="10"/>
+        <Label x:Name="lblDistanceLabel" Content="Distance:" Visibility="Hidden" HorizontalAlignment="Left" Margin="10,356,0,0" VerticalAlignment="Top" FontSize="10"/>
+        <Label x:Name="lblDistance" Content="0" Visibility="Hidden" HorizontalAlignment="Left" Margin="60,356,0,0" VerticalAlignment="Top" FontSize="10"/>
     </Grid>
 </Window>
