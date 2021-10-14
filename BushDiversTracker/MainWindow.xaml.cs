@@ -98,12 +98,23 @@ namespace BushDiversTracker
             REQUEST_1,
         }
 
+        // items to set in sim
+        enum SET_DATA
+        {
+            ATC_ID
+            // TODO: Fuel
+            //LEFT_FUEL,
+            //RIGHT_FUEL
+        }
+
+        // TODO: for events
         //enum EVENT_ID
         //{
         //    EVENT_PAUSED,
         //    EVENT_UNPAUSED,
         //}
 
+        // Sim variables
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
         public struct Struct1
         {
@@ -205,6 +216,9 @@ namespace BushDiversTracker
             OpenConnection();
         }
 
+        /// <summary>
+        /// Initiates a data request with the sim to setup the simvars to receive
+        /// </summary>
         private void initDataRequest()
         {
             try
@@ -261,6 +275,8 @@ namespace BushDiversTracker
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ENG FUEL FLOW GPH", "Gallons per hour", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ATC MODEL", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "TOTAL WEIGHT", "Pounds", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(SET_DATA.ATC_ID, "ATC ID", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                //simConnect.AddToDataDefinition(SET_DATA.RIGHT_FUEL, "FUEL TANK RIGHT MAIN QUANTITY", "Gallons", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
 
                 // IMPORTANT: register it with the simconnect managed wrapper marshaller
                 simConnect.RegisterDataDefineStruct<Struct1>(DEFINITIONS.Struct1);
@@ -276,24 +292,42 @@ namespace BushDiversTracker
 
         }
 
+        /// <summary>
+        /// Triggered when communication with simconnect has been opened, sets the connection status
+        /// </summary>
+        /// <param name="sender">The SimConnect library.</param>
+        /// <param name="data">Data received from sim.</param>
         private void simConnect_OnRecvOpen(SimConnect sender, SIMCONNECT_RECV_OPEN data)
         {
             elConnection.Fill = Brushes.Green;
             elConnection.Stroke = Brushes.Green;
         }
 
+        /// <summary>
+        /// Triggered when communication with simconnect has been closed, stops tracking
+        /// </summary>
+        /// <param name="sender">The SimConnect library.</param>
+        /// <param name="data">Data received from sim.</param>
         private void simconnect_OnRecvQuit(SimConnect sender, SIMCONNECT_RECV data)
         {
             CloseConnection();
             if (!bFlightCompleted && bFlightTracking) StopTracking();
         }
 
+        /// <summary>
+        /// Triggered when an exception within simconnect library ocurrs, sets the connection status
+        /// </summary>
+        /// <param name="sender">The SimConnect library.</param>
+        /// <param name="data">Data received from sim.</param>
         private void simconnect_OnRecvException(SimConnect sender, SIMCONNECT_RECV_EXCEPTION data)
         {
             elConnection.Fill = Brushes.Red;
             elConnection.Stroke = Brushes.Red;
             simConnect = null;
         }
+
+        // TODO: Someday - handle pause of sim to make time of flight more accurate
+        // Simconnect does not report this correctly for MSFS
 
         //private void simconnect_OnRecvEvent(SimConnect sender, SIMCONNECT_RECV_EVENT recEvent)
         //{
@@ -310,6 +344,11 @@ namespace BushDiversTracker
 
         //}
 
+        /// <summary>
+        /// Triggered on each data receipt from simconnect, handles logic of sim data
+        /// </summary>
+        /// <param name="sender">The SimConnect library.</param>
+        /// <param name="data">Data received from sim.</param>
         private void simConnect_OnRecvSimobjectDataBytype(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE data)
         {
             if (data.dwRequestID == 0U)
@@ -321,6 +360,9 @@ namespace BushDiversTracker
                 if (!bFlightTracking)
                     return;
 
+                // set reg number
+                simConnect.SetDataOnSimObject(SET_DATA.ATC_ID, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, txtRegistration.Text);
+                
                 // check if in a state to start flight tracking
                 if (!bReady)
                 {
@@ -332,6 +374,12 @@ namespace BushDiversTracker
                         lblStart.Visibility = Visibility.Collapsed;
                         return;
                     }
+
+                    // TODO: someday - set fuel - Currently fuel tanks are not quite what they seem.
+                    //var qty = Convert.ToDouble(txtFuel.Text) / 2;
+                    //simConnect.SetDataOnSimObject(SET_DATA.LEFT_FUEL, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, qty);
+                    //simConnect.SetDataOnSimObject(SET_DATA.RIGHT_FUEL, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, qty);
+
                     var startCheckStructure = new CheckStructure
                     {
                         Aircraft = data1.title,
@@ -470,6 +518,9 @@ namespace BushDiversTracker
             }
         }
 
+        /// <summary>
+        /// Starts a connection with SimConnect
+        /// </summary>
         public void OpenConnection()
         {
             try
@@ -500,6 +551,9 @@ namespace BushDiversTracker
             }
         }
 
+        /// <summary>
+        /// Closes a connection with SimConnect
+        /// </summary>
         public void CloseConnection()
         {
             if (simConnect != null)
@@ -517,6 +571,9 @@ namespace BushDiversTracker
             bConnected = false;
         }
 
+        /// <summary>
+        /// Starts request for data with simconnect
+        /// </summary>
         public void StartTracking()
         {
             try
@@ -530,91 +587,18 @@ namespace BushDiversTracker
             }
         }
 
-        public async void SendFlightLog(Struct1 d)
-        {
-            var log = new FlightLog()
-            {
-                PirepId = txtPirep.Text,
-                Lat = d.latitude,
-                Lon = d.longitude,
-                Heading = Convert.ToInt32(d.heading_m),
-                Altitude = Convert.ToInt32(d.indicated_altitude),
-                IndicatedSpeed = Convert.ToInt32(d.airspeed_indicated),
-                GroundSpeed = Convert.ToInt32(d.airspeed_true),
-                FuelFlow = d.fuel_flow,
-                VS = d.vspeed,
-                SimTime = HelperService.SetZuluTime(d.local_time),
-                ZuluTime = HelperService.SetZuluTime(d.zulu_time),
-                Distance = currentDistance
-            };
-
-            await _api.PostFlightLogAsync(log);
-        }
-
-        public async void EndFlight()
-        {
-            // check distance
-            var distance = HelperService.CalculateDistance(Convert.ToDouble(txtArrLat.Text), Convert.ToDouble(txtArrLon.Text), endLat, endLon, true);
-            if (distance > 2)
-            {
-                // get nearest airport and update pirep destination (return icao)
-                var req = new NewLocationRequest
-                {
-                    Lat = endLat,
-                    Lon = endLon,
-                    PirepId = txtPirep.Text
-                };
-
-                try
-                {
-                    var newLocation = await _api.PostNewLocationAsync(req);
-
-                    // update labels (destination icao)
-                    txtArrLat.Text = endLat.ToString();
-                    txtArrLon.Text = endLon.ToString();
-                    txtArrival.Text = newLocation.Icao;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error finding alternate airport", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
-                    lblErrorText.Text = ex.Message;
-                }
-            }
-
-            var pirep = new Pirep()
-            {
-                PirepId = txtPirep.Text,
-                FuelUsed = startFuelQty - endFuelQty,
-                LandingRate = landingRate,
-                TouchDownLat = landingLat,
-                TouchDownLon = landingLon,
-                TouchDownBank = landingBank,
-                TouchDownPitch = landingPitch,
-                BlockOffTime = startTime,
-                BlockOnTime = endTime,
-                Distance = currentDistance
-            };
-                        
-            var res = await _api.PostPirepAsync(pirep);
-            if (res)
-            {
-                MessageBox.Show("Pirep submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Information);
-                TidyUpAfterPirepSubmission();
-            } else
-            {
-                MessageBox.Show("Pirep Not Submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            
-        }
-
+        /// <summary>
+        /// Sends text to display on Sim - currently broken in simconnect
+        /// </summary>
+        /// <param name="text">string to be sent to sim</param>
         public void SendTextToSim(string text)
         {
             simConnect.Text(SIMCONNECT_TEXT_TYPE.PRINT_BLACK, 5, SIMCONNECT_EVENT_FLAG.DEFAULT, text);
         }
 
-#endregion
+        #endregion
 
-#region Form_Iteraction
+        #region Form_Iteraction
 
         private void btnFetchBookings_Click(object sender, RoutedEventArgs e)
         {
@@ -669,6 +653,94 @@ namespace BushDiversTracker
 
         #region Helper_methods
 
+        /// <summary>
+        /// Sends a flight log to the api
+        /// </summary>
+        /// <param name="d">data from simconnect</param>
+        public async void SendFlightLog(Struct1 d)
+        {
+            var log = new FlightLog()
+            {
+                PirepId = txtPirep.Text,
+                Lat = d.latitude,
+                Lon = d.longitude,
+                Heading = Convert.ToInt32(d.heading_m),
+                Altitude = Convert.ToInt32(d.indicated_altitude),
+                IndicatedSpeed = Convert.ToInt32(d.airspeed_indicated),
+                GroundSpeed = Convert.ToInt32(d.airspeed_true),
+                FuelFlow = d.fuel_flow,
+                VS = d.vspeed,
+                SimTime = HelperService.SetZuluTime(d.local_time),
+                ZuluTime = HelperService.SetZuluTime(d.zulu_time),
+                Distance = currentDistance
+            };
+
+            await _api.PostFlightLogAsync(log);
+        }
+
+        /// <summary>
+        /// Ends a flight and submits the pirep
+        /// </summary>
+        public async void EndFlight()
+        {
+            // check distance
+            var distance = HelperService.CalculateDistance(Convert.ToDouble(txtArrLat.Text), Convert.ToDouble(txtArrLon.Text), endLat, endLon, true);
+            if (distance > 2)
+            {
+                // get nearest airport and update pirep destination (return icao)
+                var req = new NewLocationRequest
+                {
+                    Lat = endLat,
+                    Lon = endLon,
+                    PirepId = txtPirep.Text
+                };
+
+                try
+                {
+                    var newLocation = await _api.PostNewLocationAsync(req);
+
+                    // update labels (destination icao)
+                    txtArrLat.Text = endLat.ToString();
+                    txtArrLon.Text = endLon.ToString();
+                    txtArrival.Text = newLocation.Icao;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error finding alternate airport", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
+                    lblErrorText.Text = ex.Message;
+                }
+            }
+
+            var pirep = new Pirep()
+            {
+                PirepId = txtPirep.Text,
+                FuelUsed = startFuelQty - endFuelQty,
+                LandingRate = landingRate,
+                TouchDownLat = landingLat,
+                TouchDownLon = landingLon,
+                TouchDownBank = landingBank,
+                TouchDownPitch = landingPitch,
+                BlockOffTime = startTime,
+                BlockOnTime = endTime,
+                Distance = currentDistance
+            };
+
+            var res = await _api.PostPirepAsync(pirep);
+            if (res)
+            {
+                MessageBox.Show("Pirep submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Information);
+                TidyUpAfterPirepSubmission();
+            }
+            else
+            {
+                MessageBox.Show("Pirep Not Submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+        }
+
+        /// <summary>
+        /// Clears variables and flight related info after pirep submission
+        /// </summary>
         protected void TidyUpAfterPirepSubmission()
         {
             btnStop.Visibility = Visibility.Hidden;
@@ -683,6 +755,9 @@ namespace BushDiversTracker
             FetchDispatch();
         }
 
+        /// <summary>
+        /// Clears variables related to a flight
+        /// </summary>
         private void ClearVariables()
         {
             bDispatch = false;
@@ -710,6 +785,9 @@ namespace BushDiversTracker
             currentFuelQty = 0;
         }
 
+        /// <summary>
+        /// Cancels the tracking and progress of a flight
+        /// </summary>
         private async void StopTracking()
         {
             ClearVariables();
@@ -731,6 +809,10 @@ namespace BushDiversTracker
             }
         }
 
+        /// <summary>
+        /// Sets the dispatch information from server
+        /// </summary>
+        /// <param name="dispatch">Dispatch info to be set</param>
         private void SetDispatchData(Dispatch dispatch)
         {
 
@@ -752,6 +834,13 @@ namespace BushDiversTracker
             grpFlight.Visibility = Visibility.Visible;
         }
 
+        /// <summary>
+        /// Runs checks to make sure in a ready state to start flight
+        /// </summary>
+        /// <param name="data">data to check if flight is read to start</param>
+        /// <returns>
+        /// True if ready, false if something is not setup correctly
+        /// </returns>
         public bool CheckReadyForStart(CheckStructure data)
         {
             // clear text errors
@@ -803,6 +892,9 @@ namespace BushDiversTracker
             return status;
         }
 
+        /// <summary>
+        /// Clears any errors from previous check
+        /// </summary>
         public void ClearCheckErrors()
         {
             lblDepartureError.Visibility = Visibility.Hidden;
@@ -811,6 +903,9 @@ namespace BushDiversTracker
             lblFuelError.Visibility = Visibility.Hidden;
         }
 
+        /// <summary>
+        /// Gets dispatch info from api
+        /// </summary>
         public async void FetchDispatch()
         {
             lblStatusText.Text = "Ok";
