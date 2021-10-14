@@ -13,10 +13,14 @@ namespace BushDiversTracker.Services
 {
     class APIService
     {
-        protected string baseUrl = "https://forum.bushdivers.com/api";
-        // protected string baseUrl = "http://localhost:8000/api";
+        //protected string baseUrl = "https://forum.bushdivers.com/api";
+        protected string baseUrl = "http://localhost:8000/api";
         HttpClient _http = new HttpClient();
 
+        /// <summary>
+        /// Gets dispatch cargo/pax data
+        /// </summary>
+        /// <returns>Collection of cargo</returns>
         public async Task<ICollection<DispatchCargo>> GetDispatchCargoAsync()
         {
             AddHeaders();
@@ -38,6 +42,10 @@ namespace BushDiversTracker.Services
             }
         }
 
+        /// <summary>
+        /// Gets dispatch info from api
+        /// </summary>
+        /// <returns>Dispatch information</returns>
         public async Task<Dispatch> GetDispatchInfoAsync()
         {
             AddHeaders();
@@ -59,6 +67,11 @@ namespace BushDiversTracker.Services
             }
         }
 
+        /// <summary>
+        /// Sends new arrival location to api, if different from intended destination
+        /// </summary>
+        /// <param name="newLocation">New location details</param>
+        /// <returns>New location feedback</returns>
         public async Task<NewLocationResponse> PostNewLocationAsync(NewLocationRequest newLocation)
         {
             AddHeaders();
@@ -80,6 +93,11 @@ namespace BushDiversTracker.Services
             }
         }
 
+        /// <summary>
+        /// Posts a flight log to the api
+        /// </summary>
+        /// <param name="flightLog">FlightLog data to send</param>
+        /// <returns>true of logged successfully</returns>
         public async Task<bool> PostFlightLogAsync(FlightLog flightLog)
         {
             AddHeaders();
@@ -96,6 +114,11 @@ namespace BushDiversTracker.Services
             }
         }
 
+        /// <summary>
+        /// Submits pirep data to api
+        /// </summary>
+        /// <param name="pirep">Pirep data</param>
+        /// <returns>true if submission was successful</returns>
         public async Task<bool> PostPirepAsync(Pirep pirep)
         {
             AddHeaders();
@@ -112,6 +135,10 @@ namespace BushDiversTracker.Services
             }
         }
 
+        /// <summary>
+        /// Updates pirep to cancel progress and reset
+        /// </summary>
+        /// <returns>true if successful</returns>
         public async Task<bool> CancelTrackingAsync()
         {
             AddHeaders();
@@ -128,6 +155,11 @@ namespace BushDiversTracker.Services
             }
         }
 
+        /// <summary>
+        /// Posts a status update for pirep
+        /// </summary>
+        /// <param name="pirepStatus">Status to send</param>
+        /// <returns>true if successful</returns>
         public async Task<bool> PostPirepStatusAsync(PirepStatus pirepStatus)
         {
             AddHeaders();
@@ -156,6 +188,9 @@ namespace BushDiversTracker.Services
         //    }
         //}
 
+        /// <summary>
+        /// Adds default headers to a request
+        /// </summary>
         protected void AddHeaders()
         {
             _http.DefaultRequestHeaders.Authorization =
