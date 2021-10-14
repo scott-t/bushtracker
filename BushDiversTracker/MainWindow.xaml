@@ -47,7 +47,7 @@
 
                 <Label x:Name="lblFuel" Content="Planned Fuel:" HorizontalAlignment="Left" Margin="153,77,0,0" Height="29" VerticalAlignment="Top" Grid.Column="1"/>
                 <TextBlock x:Name="txtFuel" Margin="238,82,0,0" Text="Test" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="235" Grid.Column="1"/>
-                <Label x:Name="lblCargo" Content="Cargo (kg):" HorizontalAlignment="Left" Margin="14,75,0,0" Height="29" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+                <Label x:Name="lblCargo" Content="Cargo (lbs):" HorizontalAlignment="Left" Margin="14,75,0,0" Height="29" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
                 <TextBlock x:Name="txtCargoWeight" Margin="17,82,0,0" Text="Test" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="120" Grid.Column="1"/>
                 <Label x:Name="lblPax" Content="PAX:" HorizontalAlignment="Left" Margin="14,111,0,0" Height="29" VerticalAlignment="Top"/>
                 <TextBlock x:Name="txtPaxCount" Margin="17,116,0,0" Text="Test" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="120" Grid.Column="1"/>
