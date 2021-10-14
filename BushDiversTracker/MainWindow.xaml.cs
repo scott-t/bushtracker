@@ -624,6 +624,8 @@ namespace BushDiversTracker
 
         private async void btnSubmit_Click(object sender, RoutedEventArgs e)
         {
+            lblSubmitting.Visibility = Visibility.Visible;
+            btnSubmit.IsEnabled = false;
             EndFlight();
         }
 
@@ -706,8 +708,10 @@ namespace BushDiversTracker
                 }
                 catch (Exception ex)
                 {
+                    lblSubmitting.Visibility = Visibility.Hidden;
                     MessageBox.Show("Error finding alternate airport", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
                     lblErrorText.Text = ex.Message;
+                    btnSubmit.IsEnabled = true;
                 }
             }
 
@@ -728,12 +732,15 @@ namespace BushDiversTracker
             var res = await _api.PostPirepAsync(pirep);
             if (res)
             {
+                lblSubmitting.Visibility = Visibility.Hidden;
                 MessageBox.Show("Pirep submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Information);
                 TidyUpAfterPirepSubmission();
             }
             else
             {
+                lblSubmitting.Visibility = Visibility.Hidden;
                 MessageBox.Show("Pirep Not Submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
+                btnSubmit.IsEnabled = true;
             }
 
         }

@@ -76,5 +76,6 @@
         <Label x:Name="lblDistanceLabel" Content="Distance:" Visibility="Hidden" HorizontalAlignment="Left" Margin="10,356,0,0" VerticalAlignment="Top" FontSize="10"/>
         <Label x:Name="lblDistance" Content="0" Visibility="Hidden" HorizontalAlignment="Left" Margin="60,356,0,0" VerticalAlignment="Top" FontSize="10"/>
         <Label x:Name="lblDeadHead" Content="This is a deadhead flight, there is no cargo" HorizontalAlignment="Left" Margin="132,61,0,0" VerticalAlignment="Top" FontSize="10" Visibility="Hidden"/>
+        <Label x:Name="lblSubmitting" Content="submitting..." Visibility="Hidden" HorizontalAlignment="Left" Margin="10,415,0,0" VerticalAlignment="Top" FontSize="10"/>
     </Grid>
 </Window>
