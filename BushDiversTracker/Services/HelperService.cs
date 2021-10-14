@@ -9,7 +9,17 @@ namespace BushDiversTracker.Services
 {
     class HelperService
     {
-
+        /// <summary>
+        /// Calculates the distance between two points
+        /// </summary>
+        /// <param name="latFrom">double</param>
+        /// <param name="lonFrom">double</param>
+        /// <param name="latTo">double</param>
+        /// <param name="lonTo">double</param>
+        /// <param name="endRad">if end lat/ln is a radian already</param>
+        /// <returns>
+        /// Double of calculated distance
+        /// </returns>
         public static double CalculateDistance(double latFrom, double lonFrom, double latTo, double lonTo, bool endRad = false)
         {
             latTo = DegToRad(latTo);
@@ -30,18 +40,34 @@ namespace BushDiversTracker.Services
             return d;
         }
 
+        /// <summary>
+        /// Converts deg lat/lon to radian
+        /// </summary>
+        /// <param name="deg">Double of degrees</param>
+        /// <returns>double of radian</returns>
         public static double DegToRad(double deg)
         {
             double rad = (Math.PI / 180) * deg;
             return rad;
         }
 
+        /// <summary>
+        /// Takes time in seconds and converts to datetime
+        /// </summary>
+        /// <param name="zuluTimeInSecs">int seconds in time</param>
+        /// <returns>DateTime of zulu</returns>
         public static DateTime SetZuluTime(int zuluTimeInSecs)
         {
 
             return DateTime.Today.Add(TimeSpan.FromSeconds((double)zuluTimeInSecs));
         }
 
+        /// <summary>
+        /// Checks if there has been a valid increase or decrease in altitude
+        /// </summary>
+        /// <param name="currentAlt">The current/previous alt</param>
+        /// <param name="newAlt">The new alt</param>
+        /// <returns>true if change is within zone</returns>
         public static bool CheckForAltChange(double currentAlt, double newAlt)
         {
             var increasedAlt = newAlt >= (currentAlt + 200) ? true : false;
@@ -50,6 +76,12 @@ namespace BushDiversTracker.Services
             else return false;
         }
 
+        /// <summary>
+        /// Checks if there has been a valid change in direction
+        /// </summary>
+        /// <param name="currentHdg">last heading</param>
+        /// <param name="newHdg">new heading</param>
+        /// <returns>true if heading change is 7 degrees or more</returns>
         public static bool CheckForHeadingChange(double currentHdg, double newHdg)
         {
             var left = currentHdg - newHdg;
@@ -64,6 +96,10 @@ namespace BushDiversTracker.Services
             else return false;
         }
 
+        /// <summary>
+        /// Sends information to log file
+        /// </summary>
+        /// <param name="msg">String to send to log file</param>
         public static void WriteToLog(string msg)
         {
             var fileName = DateTime.Now.Date.ToString();
@@ -75,6 +111,9 @@ namespace BushDiversTracker.Services
             }
         }
 
+        /// <summary>
+        /// Processes flight cancellation
+        /// </summary>
         public static async void CancelFlightOnExit()
         {
             var _api = new APIService();
