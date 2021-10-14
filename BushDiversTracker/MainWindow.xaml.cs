@@ -361,7 +361,7 @@ namespace BushDiversTracker
                     return;
 
                 // set reg number
-                simConnect.SetDataOnSimObject(SET_DATA.ATC_ID, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, txtRegistration.Text);
+                // simConnect.SetDataOnSimObject(SET_DATA.ATC_ID, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, txtRegistration.Text);
                 
                 // check if in a state to start flight tracking
                 if (!bReady)
@@ -752,6 +752,7 @@ namespace BushDiversTracker
             btnStart.IsEnabled = false;
             lblDistanceLabel.Visibility = Visibility.Hidden;
             lblDistance.Visibility = Visibility.Hidden;
+            lblDeadHead.Visibility = Visibility.Hidden;
             FetchDispatch();
         }
 
@@ -924,9 +925,16 @@ namespace BushDiversTracker
             try
             {
                 var dispatch = await _api.GetDispatchInfoAsync();
-                var dispatchCargo = await _api.GetDispatchCargoAsync();
-                // load bookings into grid
-                dgBookings.ItemsSource = dispatchCargo;
+                if (dispatch.IsEmpty == 0)
+                {
+                    var dispatchCargo = await _api.GetDispatchCargoAsync();
+                    // load bookings into grid
+                    dgBookings.ItemsSource = dispatchCargo;
+                }
+                else
+                {
+                    lblDeadHead.Visibility = Visibility.Visible;
+                }
                 SetDispatchData(dispatch);
                 bDispatch = true;
                 if (bConnected)

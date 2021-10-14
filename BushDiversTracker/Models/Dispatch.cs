@@ -35,5 +35,7 @@ namespace BushDiversTracker.Models
         public int PassengerCount { get; set; }
         [JsonPropertyName("id")]
         public string Id { get; set; }
+        [JsonPropertyName("is_empty")]
+        public int IsEmpty { get; set; }
     }
 }
