@@ -481,7 +481,24 @@ namespace BushDiversTracker
                         lblEnd.Visibility = Visibility.Hidden;
                     }
                 }
-                
+
+                // calculate cumulative distance
+                if (!bFirstData)
+                {
+                    // calc distance
+                    var d = HelperService.CalculateDistance(lastLat, lastLon, data1.latitude, data1.longitude);
+                    if (d > 50)
+                    {
+                        MessageBox.Show("It looks like you have abandoned your flight, tracking will now stop and your progress cancelled.", "Bush Divers", MessageBoxButton.OK);
+                        StopTracking();
+                        return;
+                    }
+                    currentDistance += d;
+                    lblDistance.Content = currentDistance.ToString("0.##");
+                }
+
+                lastLat = data1.latitude;
+                lastLon = data1.longitude;
 
                 // Send data to api
                 var headingChanged = HelperService.CheckForHeadingChange(lastHeading, data1.heading_m);
@@ -502,18 +519,6 @@ namespace BushDiversTracker
                 lastAltitude = data1.indicated_altitude;
                 lastHeading = data1.heading_m;
                 lastVs = data1.vspeed;
-
-                // calculate cumulative distance
-                if (!bFirstData)
-                {
-                    // calc distance
-                    var d = HelperService.CalculateDistance(lastLat, lastLon, data1.latitude, data1.longitude);
-                    currentDistance += d;
-                    lblDistance.Content = currentDistance.ToString("0.##");
-                }
-
-                lastLat = data1.latitude;
-                lastLon = data1.longitude;
             }
         }
 
