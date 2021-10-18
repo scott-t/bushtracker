@@ -18,10 +18,10 @@
         <Button x:Name="btnFetchBookings" Click="btnFetchBookings_Click"  Content="Fetch Dispatch" Padding="5" Margin="10,123,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99"/>
         <StatusBar Margin="0,451,0,0" Height="33" VerticalAlignment="Top">
             <StatusBarItem HorizontalAlignment="Left">
-                <TextBlock x:Name="lblStatusText" Padding="3" FontSize="10" Text="Ok" />
+                <TextBlock x:Name="lblStatusText" Background="#D1D5DB" Foreground="#374151" Padding="5 3" FontSize="11" Text="Ok" />
             </StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right" Foreground="#FFFF0C0C">
-                <TextBlock x:Name="lblErrorText" Padding="3" Text="" FontSize="10" />
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock x:Name="lblErrorText" Padding="5 3" Text="test" Visibility="Hidden" Background="#FECACA" Foreground="#DC2626" FontSize="11" />
             </StatusBarItem>
         </StatusBar>
         <DataGrid x:Name="dgBookings" Margin="132,87,0,0" CanUserAddRows="False" HorizontalGridLinesBrush="#FF4B4949" VerticalGridLinesBrush="#FF4B4949" HorizontalAlignment="Left" Width="610" Height="100" VerticalAlignment="Top" />
@@ -56,10 +56,10 @@
                 <TextBlock x:Name="txtDepLon" Margin="405,101,119,0" Text="DepLon" TextWrapping="Wrap" Visibility="Hidden" VerticalAlignment="Top" Grid.Column="1"/>
                 <TextBlock x:Name="txtArrLat" Margin="527,0,-3,0" Text="ArrLat" TextWrapping="Wrap" Visibility="Hidden" VerticalAlignment="Center" Grid.Column="1"/>
                 <TextBlock x:Name="txtArrLon" Margin="526,101,-2,0" Text="ArrLon" TextWrapping="Wrap" Visibility="Hidden" VerticalAlignment="Top" Grid.Column="1"/>
-                <Label x:Name="lblDepartureError" Visibility="Hidden" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="19,26,0,0" VerticalAlignment="Top" Foreground="#FFF00808"/>
+                <Label x:Name="lblDepartureError" Visibility="Hidden" Content="Incorrect location" Padding="1" HorizontalAlignment="Left" Margin="19,26,0,0" VerticalAlignment="Top" Foreground="#FFF00808" Grid.ColumnSpan="2" Width="175"/>
                 <Label x:Name="lblCargoError" Visibility="Hidden" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="18,98,0,0" VerticalAlignment="Top" Foreground="#FFF00808"/>
                 <Label x:Name="lblAircraftError" Visibility="Hidden" Foreground="#FFF00808" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="157,0,0,0" VerticalAlignment="Center" Grid.Column="1"/>
-                <Label x:Name="lblFuelError" Visibility="Hidden" Foreground="#FFF00808" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="157,116,0,0" VerticalAlignment="Top" Grid.Column="1"/>
+                <Label x:Name="lblFuelError" Visibility="Hidden" Foreground="#FFF00808" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="157,100,0,0" VerticalAlignment="Top" Grid.Column="1"/>
                 <Label x:Name="lblAircraftType" Content="Type:" HorizontalAlignment="Left" Margin="152,24,0,0" Height="29" VerticalAlignment="Top" Grid.Column="1"/>
                 <TextBlock x:Name="txtAircraftType" Margin="238,31,0,0" Text="Test" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="235" Grid.Column="1"/>
             </Grid>

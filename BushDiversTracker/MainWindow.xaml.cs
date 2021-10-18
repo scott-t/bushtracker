@@ -396,6 +396,8 @@ namespace BushDiversTracker
                         btnStart.Visibility = Visibility.Collapsed;
                         btnStop.Visibility = Visibility.Visible;
                         lblStatusText.Text = "Ready to Start";
+                        lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#16A34A"));
+                        lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BBF7D0"));
 
                     } else
                     {
@@ -423,6 +425,8 @@ namespace BushDiversTracker
                     flightStatus = Convert.ToInt32(PirepStatusType.BOARDING);
                     lblStatusText.Text = "Pre-flight|Loading";
                     SendTextToSim("Bush Tracker Status: Pre-Flight - Ready");
+                    lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
+                    lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
                 }
 
                 // check for take off
@@ -430,7 +434,9 @@ namespace BushDiversTracker
                 {
                     flightStatus = Convert.ToInt32(PirepStatusType.DEPARTED);
                     lblStatusText.Text = "Departed";
-                    
+                    lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
+                    lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
+
                     SendTextToSim("Bush Tracker Status: Departed - Have a good flight!");
                 }
 
@@ -439,6 +445,8 @@ namespace BushDiversTracker
                 {
                     flightStatus = Convert.ToInt32(PirepStatusType.APPROACH);
                     lblStatusText.Text = "Landed";
+                    lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
+                    lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
                     btnEndFlight.IsEnabled = true;
                     SendTextToSim("Bush Tracker Status: Landed");
                 }
@@ -453,6 +461,8 @@ namespace BushDiversTracker
                         bFlightTracking = false;
                         flightStatus = Convert.ToInt32(PirepStatusType.ARRIVED);
                         lblStatusText.Text = "Flight ended";
+                        lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#16A34A"));
+                        lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BBF7D0"));
                         SendTextToSim("Bush Tracker Status: Flight ended - Thanks for working with Bush Divers");
 
                         endFuelQty = data1.fuel_qty;
@@ -489,7 +499,8 @@ namespace BushDiversTracker
                     var d = HelperService.CalculateDistance(lastLat, lastLon, data1.latitude, data1.longitude);
                     if (d > 50)
                     {
-                        MessageBox.Show("It looks like you have abandoned your flight, tracking will now stop and your progress cancelled.", "Bush Divers", MessageBoxButton.OK);
+                        bFlightTracking = false;
+                        MessageBox.Show("It looks like you have abandoned your flight, tracking will now stop and your progress cancelled." + "\n" + "You can start your flight again by returning to the departure location", "Bush Divers", MessageBoxButton.OK);
                         StopTracking();
                         return;
                     }
@@ -547,11 +558,13 @@ namespace BushDiversTracker
                 timer.Interval = TimeSpan.FromSeconds(10.0);
                 timer.Tick += new EventHandler(Timer_Tick);
                 timer.Start();
+                lblErrorText.Visibility = Visibility.Hidden;
             }
             catch (COMException ex)
             {
                 HelperService.WriteToLog($"Issue connecting to sim: {ex.Message}");
                 lblErrorText.Text = $"Issue connecting to sim: {ex.Message}";
+                lblErrorText.Visibility = Visibility.Visible;
             }
         }
 
@@ -587,7 +600,6 @@ namespace BushDiversTracker
             catch (COMException ex)
             {
                 HelperService.WriteToLog($"Issue getting update from sim: {ex.Message}");
-                lblErrorText.Text = $"Issue getting update from sim: {ex.Message}";
             }
         }
 
@@ -624,18 +636,21 @@ namespace BushDiversTracker
             bFlightTracking = true;
             lblDistanceLabel.Visibility = Visibility.Visible;
             lblDistance.Visibility = Visibility.Visible;
+            lblErrorText.Visibility = Visibility.Hidden;
         }
 
         private async void btnSubmit_Click(object sender, RoutedEventArgs e)
         {
             lblSubmitting.Visibility = Visibility.Visible;
             btnSubmit.IsEnabled = false;
+            lblErrorText.Visibility = Visibility.Hidden;
             EndFlight();
         }
 
         private void btnStop_Click(object sender, RoutedEventArgs e)
         {
             StopTracking();
+            lblErrorText.Visibility = Visibility.Hidden;
         }
 
         private void btnConnect_Click(object sender, RoutedEventArgs e)
@@ -643,6 +658,7 @@ namespace BushDiversTracker
             OpenConnection();
             if (bConnected)
             {
+                lblErrorText.Visibility = Visibility.Hidden;
                 btnConnect.IsEnabled = false;
             }
         }
@@ -715,6 +731,7 @@ namespace BushDiversTracker
                     lblSubmitting.Visibility = Visibility.Hidden;
                     MessageBox.Show("Error finding alternate airport", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
                     lblErrorText.Text = ex.Message;
+                    lblErrorText.Visibility = Visibility.Visible;
                     btnSubmit.IsEnabled = true;
                 }
             }
@@ -810,6 +827,8 @@ namespace BushDiversTracker
             if (res)
             {
                 lblStatusText.Text = "Tracking Stopped";
+                lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
+                lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
                 btnStop.Visibility = Visibility.Hidden;
                 btnStart.Visibility = Visibility.Visible;
                 btnStart.IsEnabled = true;
@@ -818,6 +837,7 @@ namespace BushDiversTracker
             else
             {
                 lblErrorText.Text = "Issue cancelling pirep";
+                lblErrorText.Visibility = Visibility.Visible;
             }
         }
 
@@ -897,7 +917,7 @@ namespace BushDiversTracker
             if (distance > 2)
             {
                 // set error text for departure
-                lblDepartureError.Content = "You are not at your planned departure";
+                lblDepartureError.Content = "Incorrect location";
                 lblDepartureError.Visibility = Visibility.Visible;
                 status = false;
             }
@@ -921,6 +941,8 @@ namespace BushDiversTracker
         public async void FetchDispatch()
         {
             lblStatusText.Text = "Ok";
+            lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
+            lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
             if (txtKey.Text == "")
             {
                 MessageBox.Show("Please enter your API key", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Exclamation);
@@ -958,11 +980,13 @@ namespace BushDiversTracker
                 }
                 lblFetch.Visibility = Visibility.Hidden;
                 lblErrorText.Text = "";
+                lblErrorText.Visibility = Visibility.Hidden;
             }
             catch (Exception ex)
             {
                 lblFetch.Visibility = Visibility.Hidden;
                 lblErrorText.Text = ex.Message;
+                lblErrorText.Visibility = Visibility.Visible;
                 if (ex.Message == "Fetching dispatch info: No Content")
                 {
                     dgBookings.ItemsSource = null;
