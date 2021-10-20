@@ -858,6 +858,15 @@ namespace BushDiversTracker
             txtFuel.Text = dispatch.PlannedFuel.ToString();
             txtCargoWeight.Text = dispatch.CargoWeight.ToString();
             txtPaxCount.Text = dispatch.PassengerCount.ToString();
+            if (dispatch.PassengerCount > 0)
+            {
+                decimal paxWeight = dispatch.PassengerCount * 176;
+                var total = dispatch.CargoWeight + paxWeight;
+                txtPayloadTotal.Text = total.ToString();
+            } else
+            {
+                txtPayloadTotal.Text = dispatch.CargoWeight.ToString();
+            }
             txtPirep.Text = dispatch.Id.ToString();
             txtDepLat.Text = dispatch.DepLat.ToString();
             txtDepLon.Text = dispatch.DepLon.ToString();
