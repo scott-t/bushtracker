@@ -24,6 +24,7 @@ namespace BushDiversTracker.Services
         public async Task<ICollection<DispatchCargo>> GetDispatchCargoAsync()
         {
             AddHeaders();
+            _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             HttpResponseMessage res = await _http.GetAsync($"{baseUrl}/dispatch/cargo");
             if (res.StatusCode == HttpStatusCode.OK)
             {
@@ -49,6 +50,7 @@ namespace BushDiversTracker.Services
         public async Task<Dispatch> GetDispatchInfoAsync()
         {
             AddHeaders();
+            _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             HttpResponseMessage res = await _http.GetAsync($"{baseUrl}/dispatch");
             if (res.StatusCode == HttpStatusCode.OK)
             {
@@ -142,6 +144,7 @@ namespace BushDiversTracker.Services
         public async Task<bool> CancelTrackingAsync()
         {
             AddHeaders();
+            _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             HttpResponseMessage res = await _http.GetAsync($"{baseUrl}/pirep/reset");
             if (res.StatusCode == HttpStatusCode.OK)
             {
@@ -195,7 +198,6 @@ namespace BushDiversTracker.Services
         {
             _http.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", Properties.Settings.Default.Key);
-            _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
     }
 }
