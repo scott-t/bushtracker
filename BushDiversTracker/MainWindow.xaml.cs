@@ -860,7 +860,7 @@ namespace BushDiversTracker
             txtPaxCount.Text = dispatch.PassengerCount.ToString();
             if (dispatch.PassengerCount > 0)
             {
-                decimal paxWeight = dispatch.PassengerCount * 176;
+                decimal paxWeight = dispatch.PassengerCount * 170;
                 var total = dispatch.CargoWeight + paxWeight;
                 txtPayloadTotal.Text = total.ToString();
             } else
