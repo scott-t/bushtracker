@@ -1,4 +1,4 @@
-﻿using BushDiversTracker.Models;
+using BushDiversTracker.Models;
 using BushDiversTracker.Models.Enums;
 using BushDiversTracker.Services;
 using System;
@@ -861,11 +861,12 @@ namespace BushDiversTracker
             if (dispatch.PassengerCount > 0)
             {
                 decimal paxWeight = dispatch.PassengerCount * 170;
-                var total = dispatch.CargoWeight + paxWeight;
+                var total = dispatch.CargoWeight + paxWeight + 170; // adds pilot weight
                 txtPayloadTotal.Text = total.ToString();
             } else
             {
-                txtPayloadTotal.Text = dispatch.CargoWeight.ToString();
+                var total = dispatch.CargoWeight + 170; // adds pilot weight
+                txtPayloadTotal.Text = total.ToString();
             }
             txtPirep.Text = dispatch.Id.ToString();
             txtDepLat.Text = dispatch.DepLat.ToString();
