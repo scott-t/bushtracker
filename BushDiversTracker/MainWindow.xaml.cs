@@ -41,7 +41,7 @@ namespace BushDiversTracker
             lblErrorText.Visibility = Visibility.Hidden;
             grpFlight.Visibility = Visibility.Hidden;
             lblDeadHead.Visibility = Visibility.Hidden;
-                        
+
             txtPirep.Visibility = Visibility.Hidden;
             txtDepLat.Visibility = Visibility.Hidden;
             txtDepLon.Visibility = Visibility.Hidden;
@@ -60,8 +60,7 @@ namespace BushDiversTracker
             lblDistance.Visibility = Visibility.Hidden;
             lblSubmitting.Visibility = Visibility.Hidden;
 
-
-            txtKey.Text = Properties.Settings.Default.Key;
+            txtKey.Password = Properties.Settings.Default.Key;
             _api = new APIService();
             if (!System.Diagnostics.Debugger.IsAttached)
             {
@@ -392,7 +391,7 @@ namespace BushDiversTracker
 
                 // set reg number
                 // simConnect.SetDataOnSimObject(SET_DATA.ATC_ID, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, txtRegistration.Text);
-                
+
                 // check if in a state to start flight tracking
                 if (!bReady)
                 {
@@ -581,7 +580,7 @@ namespace BushDiversTracker
                 simConnect.OnRecvOpen += new SimConnect.RecvOpenEventHandler(simConnect_OnRecvOpen);
                 simConnect.OnRecvQuit += new SimConnect.RecvQuitEventHandler(simconnect_OnRecvQuit);
                 //simConnect.OnRecvEvent += new SimConnect.RecvEventEventHandler(simconnect_OnRecvEvent);
-                
+
                 initDataRequest();
 
                 bConnected = true;
@@ -811,7 +810,7 @@ namespace BushDiversTracker
         protected void TidyUpAfterPirepSubmission()
         {
             btnStop.Visibility = Visibility.Hidden;
-            
+
             ClearVariables();
             btnSubmit.IsEnabled = false;
             btnStart.Visibility = Visibility.Visible;
@@ -1005,14 +1004,14 @@ namespace BushDiversTracker
             lblStatusText.Text = "Ok";
             lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
             lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
-            if (txtKey.Text == "")
+            if (txtKey.Password == "")
             {
                 MessageBox.Show("Please enter your API key", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 return;
             }
-            if (txtKey.Text != Properties.Settings.Default.Key)
+            if (txtKey.Password != Properties.Settings.Default.Key)
             {
-                Properties.Settings.Default.Key = txtKey.Text;
+                Properties.Settings.Default.Key = txtKey.Password;
                 Properties.Settings.Default.Save();
             }
             lblFetch.Visibility = Visibility.Visible;
