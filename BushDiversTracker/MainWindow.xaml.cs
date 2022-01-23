@@ -36,6 +36,31 @@ namespace BushDiversTracker
         public MainWindow()
         {
             InitializeComponent();
+
+            // Initialise visibility here to help UI editability
+            lblErrorText.Visibility = Visibility.Hidden;
+            grpFlight.Visibility = Visibility.Hidden;
+            lblDeadHead.Visibility = Visibility.Hidden;
+                        
+            txtPirep.Visibility = Visibility.Hidden;
+            txtDepLat.Visibility = Visibility.Hidden;
+            txtDepLon.Visibility = Visibility.Hidden;
+            txtArrLat.Visibility = Visibility.Hidden;
+            txtArrLon.Visibility = Visibility.Hidden;
+            lblDepartureError.Visibility = Visibility.Hidden;
+            lblCargoError.Visibility = Visibility.Hidden;
+            lblAircraftError.Visibility = Visibility.Hidden;
+            lblFuelError.Visibility = Visibility.Hidden;
+
+            btnStop.Visibility = Visibility.Hidden;
+            lblFetch.Visibility = Visibility.Hidden;
+            lblStart.Visibility = Visibility.Hidden;
+            lblEnd.Visibility = Visibility.Hidden;
+            lblDistanceLabel.Visibility = Visibility.Hidden;
+            lblDistance.Visibility = Visibility.Hidden;
+            lblSubmitting.Visibility = Visibility.Hidden;
+
+
             txtKey.Text = Properties.Settings.Default.Key;
             _api = new APIService();
             if (!System.Diagnostics.Debugger.IsAttached)
@@ -44,6 +69,11 @@ namespace BushDiversTracker
             }
             var version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             lblVersion.Content = version;
+
+            if (Properties.Settings.Default.UseMetric)
+                rdoUnitMetric.IsChecked = true;
+            else
+                rdoUnitUS.IsChecked = true;
         }
 
 #region Sim_Connect
@@ -53,6 +83,7 @@ namespace BushDiversTracker
         private DispatcherTimer timer;
 
         // Bush Tracker variables
+        private Dispatch dispatchData = null;
         protected bool bDispatch = false;
         private bool bConnected = false;
         private bool bFlightTracking = false;
@@ -406,6 +437,8 @@ namespace BushDiversTracker
                         return;
                     }
                     lblStart.Visibility = Visibility.Collapsed;
+                    lblDistance.Visibility = Visibility.Visible;
+                    lblDistanceLabel.Visibility = Visibility.Visible;
                 }
 
                 if (flag && bFirstData)
@@ -505,7 +538,7 @@ namespace BushDiversTracker
                         return;
                     }
                     currentDistance += d;
-                    lblDistance.Content = currentDistance.ToString("0.##");
+                    lblDistance.Content = currentDistance.ToString("0.## nm");
                 }
 
                 lastLat = data1.latitude;
@@ -634,8 +667,6 @@ namespace BushDiversTracker
             }
 
             bFlightTracking = true;
-            lblDistanceLabel.Visibility = Visibility.Visible;
-            lblDistance.Visibility = Visibility.Visible;
             lblErrorText.Visibility = Visibility.Hidden;
         }
 
@@ -668,6 +699,14 @@ namespace BushDiversTracker
             btnEndFlight.IsEnabled = false;
             lblEnd.Visibility = Visibility.Visible;
             bEndFlight = true;
+        }
+
+        private void rdoUnitType_Checked(object sender, RoutedEventArgs e)
+        {
+            Properties.Settings.Default.UseMetric = rdoUnitMetric.IsChecked == true;
+            Properties.Settings.Default.Save();
+
+            UpdateDispatchWeight();
         }
 
         #endregion
@@ -847,7 +886,7 @@ namespace BushDiversTracker
         /// <param name="dispatch">Dispatch info to be set</param>
         private void SetDispatchData(Dispatch dispatch)
         {
-
+            dispatchData = dispatch;
             btnStart.IsEnabled = true;
             grpFlight.Visibility = Visibility.Visible;
             txtDeparture.Text = dispatch.Departure.ToString();
@@ -855,24 +894,38 @@ namespace BushDiversTracker
             txtAircraft.Text = dispatch.Aircraft.ToString();
             txtAircraftType.Text = dispatch.AircraftType.ToString();
             txtRegistration.Text = dispatch.Registration.ToString();
-            txtFuel.Text = dispatch.PlannedFuel.ToString();
-            txtCargoWeight.Text = dispatch.CargoWeight.ToString();
-            txtPaxCount.Text = dispatch.PassengerCount.ToString();
-            if (dispatch.PassengerCount > 0)
-            {
-                decimal paxWeight = dispatch.PassengerCount * 170;
-                var total = dispatch.CargoWeight + paxWeight;
-                txtPayloadTotal.Text = total.ToString();
-            } else
-            {
-                txtPayloadTotal.Text = dispatch.CargoWeight.ToString();
-            }
             txtPirep.Text = dispatch.Id.ToString();
             txtDepLat.Text = dispatch.DepLat.ToString();
             txtDepLon.Text = dispatch.DepLon.ToString();
             txtArrLat.Text = dispatch.ArrLat.ToString();
             txtArrLon.Text = dispatch.ArrLon.ToString();
+            UpdateDispatchWeight();
             grpFlight.Visibility = Visibility.Visible;
+        }
+
+        /// <summary>
+        /// Update the display fields of weights and volumes based on user settings
+        /// </summary>
+        private void UpdateDispatchWeight()
+        {
+            if (dispatchData == null)
+                return;
+
+            bool isMetric = rdoUnitMetric.IsChecked == true;
+
+            txtFuel.Text = isMetric ? HelperService.GalToLitre(dispatchData.PlannedFuel).ToString("0.## L") : dispatchData.PlannedFuel.ToString("0.## gal");
+            txtCargoWeight.Text = isMetric ? HelperService.LbsToKG(dispatchData.CargoWeight).ToString("0.# kg") : dispatchData.CargoWeight.ToString("0 lbs");
+            txtPaxCount.Text = dispatchData.PassengerCount.ToString();
+            if (dispatchData.PassengerCount > 0)
+            {
+                decimal paxWeight = dispatchData.PassengerCount * 170;
+                var total = dispatchData.CargoWeight + paxWeight;
+                txtPayloadTotal.Text = isMetric ? HelperService.LbsToKG(total).ToString("0.# kg") : total.ToString("0 lbs");
+            }
+            else
+            {
+                txtPayloadTotal.Text = isMetric ? HelperService.LbsToKG(dispatchData.CargoWeight).ToString("0.# kg") : dispatchData.CargoWeight.ToString("0 lbs");
+            }
         }
 
         /// <summary>
@@ -899,8 +952,8 @@ namespace BushDiversTracker
 
 
             // check fuel qty matches planned fuel
-            var maxVal = Convert.ToDouble(txtFuel.Text) + 5;
-            var minVal = Convert.ToDouble(txtFuel.Text) - 5;
+            var maxVal = decimal.ToDouble(dispatchData.PlannedFuel) + 5;
+            var minVal = decimal.ToDouble(dispatchData.PlannedFuel) - 5;
             //var isFuelValid = Enumerable.Range(Convert.ToInt32(minVal), Convert.ToInt32(maxVal)).Contains(Convert.ToInt32(data.Fuel));
             //if (data.Fuel <= max && data.Fuel >= min)
             if (!(minVal <= data.Fuel) || !(data.Fuel <= maxVal))
@@ -922,7 +975,7 @@ namespace BushDiversTracker
             //}
 
             // check current position
-            var distance = HelperService.CalculateDistance(Convert.ToDouble(txtDepLat.Text), Convert.ToDouble(txtDepLon.Text), data.CurrentLat, data.CurrentLon, false);
+            var distance = HelperService.CalculateDistance(decimal.ToDouble(dispatchData.DepLat), decimal.ToDouble(dispatchData.DepLon), data.CurrentLat, data.CurrentLon, false);
             if (distance > 2)
             {
                 // set error text for departure

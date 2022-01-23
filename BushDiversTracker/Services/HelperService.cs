@@ -119,5 +119,15 @@ namespace BushDiversTracker.Services
             var _api = new APIService();
             await _api.CancelTrackingAsync();
         }
+
+        public static decimal GalToLitre(decimal gal)
+        {
+            return gal * new decimal(3.785412);
+        }
+
+        public static decimal LbsToKG(decimal lbs)
+        {
+            return lbs * new decimal(0.453592);
+        }
     }
 }

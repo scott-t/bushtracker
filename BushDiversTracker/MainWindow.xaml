@@ -21,13 +21,13 @@
                 <TextBlock x:Name="lblStatusText" Background="#D1D5DB" Foreground="#374151" Padding="5 3" FontSize="11" Text="Ok" />
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock x:Name="lblErrorText" Padding="5 3" Text="test" Visibility="Hidden" Background="#FECACA" Foreground="#DC2626" FontSize="11" />
+                <TextBlock x:Name="lblErrorText" Padding="5 3" Text="test" Background="#FECACA" Foreground="#DC2626" FontSize="11" />
             </StatusBarItem>
         </StatusBar>
         <DataGrid x:Name="dgBookings" Margin="132,87,0,0" CanUserAddRows="False" HorizontalGridLinesBrush="#FF4B4949" VerticalGridLinesBrush="#FF4B4949" HorizontalAlignment="Left" Width="610" Height="100" VerticalAlignment="Top" />
         <Button x:Name="btnStart" Click="btnStart_Click" IsEnabled="False"  Content="Start Flight" Padding="5" Margin="10,242,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99"/>
-        <Button x:Name="btnStop" Click="btnStop_Click" IsEnabled="True" Visibility="Hidden" Content="Cancel Flight" HorizontalAlignment="Left" Padding="5" Margin="10,242,0,0" VerticalAlignment="Top" Height="28" Width="99"/>
-        <GroupBox x:Name="grpFlight" Margin="132,228,0,0" VerticalAlignment="Top" Height="182" Visibility="Hidden" HorizontalAlignment="Left" Width="610">
+        <Button x:Name="btnStop" Click="btnStop_Click" IsEnabled="True" Content="Cancel Flight" HorizontalAlignment="Left" Padding="5" Margin="10,242,0,0" VerticalAlignment="Top" Height="28" Width="99"/>
+        <GroupBox x:Name="grpFlight" Margin="132,228,0,0" VerticalAlignment="Top" Height="182" HorizontalAlignment="Left" Width="610">
             <GroupBox.Header>
                 Dispatch Details
             </GroupBox.Header>
@@ -47,37 +47,39 @@
 
                 <Label x:Name="lblFuel" Content="Planned Fuel:" HorizontalAlignment="Left" Margin="153,77,0,0" Height="29" VerticalAlignment="Top" Grid.Column="1"/>
                 <TextBlock x:Name="txtFuel" Margin="238,82,0,0" Text="Test" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="235" Grid.Column="1"/>
-                <Label x:Name="lblCargo" Content="Cargo (lbs):" HorizontalAlignment="Left" Margin="14,72,0,0" Height="29" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+                <Label x:Name="lblCargo" Content="Cargo:" HorizontalAlignment="Left" Margin="14,72,0,0" Height="29" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
                 <TextBlock x:Name="txtCargoWeight" Margin="56,79,0,0" Text="Test" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="92" Grid.Column="1"/>
                 <Label x:Name="lblPax" Content="PAX:" HorizontalAlignment="Left" Margin="14,101,0,0" Height="29" VerticalAlignment="Top"/>
                 <TextBlock x:Name="txtPaxCount" Margin="56,106,0,0" Text="Test" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="92" Grid.Column="1"/>
-                <TextBlock x:Name="txtPirep" Margin="406,131,118,0" Text="PirepId" TextWrapping="Wrap" Visibility="Hidden" VerticalAlignment="Top" Grid.Column="1"/>
-                <TextBlock x:Name="txtDepLat" Margin="406,0,118,0" Text="DepLat" TextWrapping="Wrap" Visibility="Hidden" VerticalAlignment="Center" Grid.Column="1"/>
-                <TextBlock x:Name="txtDepLon" Margin="405,101,119,0" Text="DepLon" TextWrapping="Wrap" Visibility="Hidden" VerticalAlignment="Top" Grid.Column="1"/>
-                <TextBlock x:Name="txtArrLat" Margin="527,0,-3,0" Text="ArrLat" TextWrapping="Wrap" Visibility="Hidden" VerticalAlignment="Center" Grid.Column="1"/>
-                <TextBlock x:Name="txtArrLon" Margin="526,101,-2,0" Text="ArrLon" TextWrapping="Wrap" Visibility="Hidden" VerticalAlignment="Top" Grid.Column="1"/>
-                <Label x:Name="lblDepartureError" Visibility="Hidden" Content="Incorrect location" Padding="1" HorizontalAlignment="Left" Margin="19,26,0,0" VerticalAlignment="Top" Foreground="#FFF00808" Grid.ColumnSpan="2" Width="175"/>
-                <Label x:Name="lblCargoError" Visibility="Hidden" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="18,98,0,0" VerticalAlignment="Top" Foreground="#FFF00808"/>
-                <Label x:Name="lblAircraftError" Visibility="Hidden" Foreground="#FFF00808" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="157,0,0,0" VerticalAlignment="Center" Grid.Column="1"/>
-                <Label x:Name="lblFuelError" Visibility="Hidden" Foreground="#FFF00808" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="157,100,0,0" VerticalAlignment="Top" Grid.Column="1"/>
+                <TextBlock x:Name="txtPirep" Margin="406,131,118,0" Text="PirepId" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1"/>
+                <TextBlock x:Name="txtDepLat" Margin="406,0,118,0" Text="DepLat" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1"/>
+                <TextBlock x:Name="txtDepLon" Margin="405,101,119,0" Text="DepLon" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1"/>
+                <TextBlock x:Name="txtArrLat" Margin="527,0,-3,0" Text="ArrLat" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1"/>
+                <TextBlock x:Name="txtArrLon" Margin="526,101,-2,0" Text="ArrLon" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1"/>
+                <Label x:Name="lblDepartureError" Content="Incorrect location" Padding="1" HorizontalAlignment="Left" Margin="19,26,0,0" VerticalAlignment="Top" Foreground="#FFF00808" Grid.ColumnSpan="2" Width="175"/>
+                <Label x:Name="lblCargoError" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="19,91,0,0" VerticalAlignment="Top" Foreground="#FFF00808"/>
+                <Label x:Name="lblAircraftError" Foreground="#FFF00808" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="159,68,0,0" VerticalAlignment="Top" Grid.Column="1"/>
+                <Label x:Name="lblFuelError" Foreground="#FFF00808" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="159,96,0,0" VerticalAlignment="Top" Grid.Column="1"/>
                 <Label x:Name="lblAircraftType" Content="Type:" HorizontalAlignment="Left" Margin="152,24,0,0" Height="29" VerticalAlignment="Top" Grid.Column="1"/>
                 <TextBlock x:Name="txtAircraftType" Margin="238,31,0,0" Text="Test" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="235" Grid.Column="1"/>
-                <Label x:Name="lblPayloadTotal" Content="Total Payload (lbs):" HorizontalAlignment="Left" Margin="14,127,0,0" Height="29" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+                <Label x:Name="lblPayloadTotal" Content="Total Payload:" HorizontalAlignment="Left" Margin="14,127,0,0" Height="29" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
                 <TextBlock x:Name="txtPayloadTotal" Margin="56,133,0,0" Text="Test" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="92" Grid.Column="1"/>
             </Grid>
         </GroupBox>
         <Ellipse x:Name="elConnection" Height="10" Margin="732,10,0,0" Stroke="Red" Fill="Red" VerticalAlignment="Top" RenderTransformOrigin="-0.3,-1.596" HorizontalAlignment="Left" Width="10"/>
         <Button x:Name="btnConnect" Click="btnConnect_Click" Content="Connect to Sim" Padding="5" Margin="10,87,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99"/>
-        <Label x:Name="lblFetch" Content="fetching..." Visibility="Hidden" HorizontalAlignment="Left" Margin="10,147,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="53"/>
-        <Button x:Name="btnSubmit" Click="btnSubmit_Click" IsEnabled="False" Visibility="Visible" Content="Submit Pirep" Padding="5" Margin="10,382,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99"/>
-        <Label x:Name="lblStart" Content="checking info..." Visibility="Hidden" HorizontalAlignment="Left" Margin="10,275,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="99"/>
+        <Label x:Name="lblFetch" Content="fetching..." HorizontalAlignment="Left" Margin="10,147,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="53"/>
+        <Button x:Name="btnSubmit" Click="btnSubmit_Click" IsEnabled="False" Content="Submit Pirep" Padding="5" Margin="10,343,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99"/>
+        <Label x:Name="lblStart" Content="checking info..." HorizontalAlignment="Left" Margin="9,265,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="99"/>
         <Label x:Name="lblVersion" Content="" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" Height="26" Width="50" RenderTransformOrigin="0.46,0.117" FontSize="8"/>
         <Label x:Name="lblConnectStatus" Content="MSFS Connection Status:" HorizontalAlignment="Left" Margin="583,1,0,0" VerticalAlignment="Top"/>
-        <Button x:Name="btnEndFlight" Click="btnEndFlight_Click" Padding="5" Visibility="Visible" IsEnabled="False" Content="I Have Arrived" HorizontalAlignment="Left" Margin="10,303,0,0" VerticalAlignment="Top" Width="99"/>
-        <Label x:Name="lblEnd" Content="checking status..." Visibility="Hidden" HorizontalAlignment="Left" Margin="10,336,0,0" VerticalAlignment="Top" Width="99" FontSize="10"/>
-        <Label x:Name="lblDistanceLabel" Content="Distance:" Visibility="Hidden" HorizontalAlignment="Left" Margin="10,356,0,0" VerticalAlignment="Top" FontSize="10"/>
-        <Label x:Name="lblDistance" Content="0" Visibility="Hidden" HorizontalAlignment="Left" Margin="60,356,0,0" VerticalAlignment="Top" FontSize="10"/>
-        <Label x:Name="lblDeadHead" Content="This is a deadhead flight, there is no cargo" HorizontalAlignment="Left" Margin="132,61,0,0" VerticalAlignment="Top" FontSize="10" Visibility="Hidden"/>
-        <Label x:Name="lblSubmitting" Content="submitting..." Visibility="Hidden" HorizontalAlignment="Left" Margin="10,415,0,0" VerticalAlignment="Top" FontSize="10"/>
+        <Button x:Name="btnEndFlight" Click="btnEndFlight_Click" Padding="5" IsEnabled="False" Content="I Have Arrived" HorizontalAlignment="Left" Margin="10,293,0,0" VerticalAlignment="Top" Width="99" RenderTransformOrigin="0.524,-1.012"/>
+        <Label x:Name="lblEnd" Content="checking status..." HorizontalAlignment="Left" Margin="10,315,0,0" VerticalAlignment="Top" Width="99" FontSize="10"/>
+        <Label x:Name="lblDistanceLabel" Content="Distance:" HorizontalAlignment="Left" Margin="9,265,0,0" VerticalAlignment="Top" FontSize="10"/>
+        <Label x:Name="lblDistance" Content="0" HorizontalAlignment="Left" Margin="58,265,0,0" VerticalAlignment="Top" FontSize="10" RenderTransformOrigin="0.624,-0.93"/>
+        <Label x:Name="lblDeadHead" Content="This is a deadhead flight, there is no cargo" HorizontalAlignment="Left" Margin="132,61,0,0" VerticalAlignment="Top" FontSize="10"/>
+        <Label x:Name="lblSubmitting" Content="submitting..." HorizontalAlignment="Left" Margin="10,366,0,0" VerticalAlignment="Top" FontSize="10" RenderTransformOrigin="0.577,0.019"/>
+        <RadioButton x:Name="rdoUnitUS" Content="US" Height="15" Margin="10,389,0,0" VerticalAlignment="Top" GroupName="unitOfMeasure" HorizontalAlignment="Left" Width="45" Checked="rdoUnitType_Checked"/>
+        <RadioButton x:Name="rdoUnitMetric" Content="Metric" HorizontalAlignment="Left" Height="15" Margin="55,389,0,0" VerticalAlignment="Top" Width="53" GroupName="unitOfMeasure" Checked="rdoUnitType_Checked"/>
     </Grid>
 </Window>
