@@ -59,6 +59,9 @@ namespace BushDiversTracker.Services
             else if (res.StatusCode == HttpStatusCode.Unauthorized)
             {
                 var msg = "Unauthorised";
+                // Basic check
+                if (!System.Text.RegularExpressions.Regex.IsMatch(Properties.Settings.Default.Key, @"^\d+\|.{40}.*$"))
+                    msg += " - API key does not match expected format";
                 throw new Exception(msg);
             }
             else
