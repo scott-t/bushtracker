@@ -708,6 +708,29 @@ namespace BushDiversTracker
             UpdateDispatchWeight();
         }
 
+        private async void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (bReady)
+            {
+                if (MessageBox.Show("A flight is currently in progress. You will need to restart your flight at a later time.\n\nAre you sure you wish to quit?", "Cancel current flight?", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                {
+                    e.Cancel = true;
+
+                    await StopTracking();
+                    if (!bReady || MessageBox.Show("There was an error cancelling your flight. If you continue you will need to cancel your dispatch via the web.\n\nQuit anyway?", "Quit?", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                    {
+                        bReady = false;
+                        ((Window)sender).Close();
+                    }
+                }
+                else
+                    e.Cancel = true;
+            }
+
+            if (!e.Cancel)
+                CloseConnection();
+        }
+
         #endregion
 
 
@@ -855,7 +878,7 @@ namespace BushDiversTracker
         /// <summary>
         /// Cancels the tracking and progress of a flight
         /// </summary>
-        private async void StopTracking()
+        private async Task StopTracking()
         {
             ClearVariables();
             lblDistance.Visibility = Visibility.Hidden;
