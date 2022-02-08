@@ -444,6 +444,9 @@ namespace BushDiversTracker
                 {
                     bLastEngineStatus = false;
                     bFirstData = false;
+                    // fix starting of engines during pre-start tests (but after initial 'engine off' test)
+                    lastLat = data1.latitude;
+                    lastLon = data1.longitude;
                 }
 
                 // Checks for start of flight and sets offblocks time
@@ -758,7 +761,15 @@ namespace BushDiversTracker
                 Distance = currentDistance
             };
 
-            await _api.PostFlightLogAsync(log);
+            try
+            {
+                await _api.PostFlightLogAsync(log);
+            }
+            catch (Exception)
+            {
+                lblErrorText.Text = "Error submitting flight update";
+                lblErrorText.Visibility = Visibility.Visible;
+            }
         }
 
         /// <summary>
@@ -811,10 +822,22 @@ namespace BushDiversTracker
                 Distance = currentDistance
             };
 
-            var res = await _api.PostPirepAsync(pirep);
+            bool res = false;
+            try
+            {
+                res = await _api.PostPirepAsync(pirep);
+            }
+            catch (Exception)
+            {
+                lblErrorText.Text = "Error submitting to server";
+                lblErrorText.Visibility = Visibility.Visible;
+            }
+
             if (res)
             {
                 lblSubmitting.Visibility = Visibility.Hidden;
+                lblErrorText.Text = "";
+                lblErrorText.Visibility = Visibility.Hidden;
                 MessageBox.Show("Pirep submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Information);
                 TidyUpAfterPirepSubmission();
             }
@@ -824,7 +847,6 @@ namespace BushDiversTracker
                 MessageBox.Show("Pirep Not Submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
                 btnSubmit.IsEnabled = true;
             }
-
         }
 
         /// <summary>
@@ -880,16 +902,31 @@ namespace BushDiversTracker
         /// </summary>
         private async Task StopTracking()
         {
-            ClearVariables();
-            lblDistance.Visibility = Visibility.Hidden;
-            lblDistanceLabel.Visibility = Visibility.Hidden;
-            // reset pirep to draft and remove any logs
-            var res = await _api.CancelTrackingAsync();
+            btnStop.IsEnabled = false;
+
+            bool res = false;
+            try
+            {
+                res = await _api.CancelTrackingAsync();
+            }
+            catch (Exception)
+            {
+                lblErrorText.Text = "Error submitting to server";
+                lblErrorText.Visibility = Visibility.Visible;
+            }
+
             if (res)
             {
+                ClearVariables();
+                lblDistance.Visibility = Visibility.Hidden;
+                lblDistanceLabel.Visibility = Visibility.Hidden;
+                // reset pirep to draft and remove any logs
+
                 lblStatusText.Text = "Tracking Stopped";
                 lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
                 lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
+                lblErrorText.Text = "";
+                lblErrorText.Visibility = Visibility.Hidden;
                 btnStop.Visibility = Visibility.Hidden;
                 btnStart.Visibility = Visibility.Visible;
                 btnStart.IsEnabled = true;
@@ -900,6 +937,7 @@ namespace BushDiversTracker
                 lblErrorText.Text = "Issue cancelling pirep";
                 lblErrorText.Visibility = Visibility.Visible;
             }
+            btnStop.IsEnabled = true;
         }
 
         /// <summary>
@@ -1079,5 +1117,6 @@ namespace BushDiversTracker
             }
         }
         #endregion
+
     }
 }
