@@ -235,15 +235,14 @@ namespace BushDiversTracker
                 try
                 {
                     simConnect.RequestDataOnSimObjectType(DAT_REQUESTS.REQUEST_1, DEFINITIONS.Struct1, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
-                    return;
                 }
                 catch (COMException ex)
                 {
                     Console.WriteLine(ex.Message);
-                    return;
                 }
             }
-            OpenConnection();
+            else
+                OpenConnection();
         }
 
         /// <summary>
@@ -660,6 +659,8 @@ namespace BushDiversTracker
         {
             lblStart.Visibility = Visibility.Visible;
             btnStart.IsEnabled = false;
+
+            // Todo, tidy this up
             if (flag)
             {
                 MessageBox.Show("Your engine(s) must be off before starting", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Exclamation);
@@ -670,6 +671,10 @@ namespace BushDiversTracker
 
             bFlightTracking = true;
             lblErrorText.Visibility = Visibility.Hidden;
+            timer.Stop();
+            // Might still get a double-fire if the dispatch is ready to send or even if the timer has ticked but response yet to be received - "shouldn't" be an issue
+            Timer_Tick(null, null);
+            timer.Start();
         }
 
         private async void btnSubmit_Click(object sender, RoutedEventArgs e)
