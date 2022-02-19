@@ -17,6 +17,13 @@ namespace BushDiversTracker.Services
         //protected string baseUrl = "http://localhost:8000/api";
         HttpClient _http = new HttpClient();
 
+        public APIService()
+        {
+            _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            var thisAssembly = System.Windows.Application.ResourceAssembly.GetName();
+            _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(thisAssembly.Name, thisAssembly.Version.ToString()));
+        }
+
         /// <summary>
         /// Gets dispatch cargo/pax data
         /// </summary>
