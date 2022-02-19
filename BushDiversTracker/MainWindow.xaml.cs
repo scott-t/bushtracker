@@ -614,7 +614,10 @@ namespace BushDiversTracker
                 simConnect.Dispose();
                 simConnect = null;
             }
-            this.timer.Stop();
+
+            if (timer != null)
+                timer.Stop();
+
             elConnection.Fill = Brushes.Red;
             elConnection.Stroke = Brushes.Red;
             btnConnect.IsEnabled = true;
