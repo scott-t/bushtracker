@@ -88,7 +88,7 @@ namespace BushDiversTracker
         private bool bFlightTracking = false;
         private bool bEndFlight = false;
         private bool bReady = false;
-        private bool flag = false;
+        private bool bEnginesRunning = false;
         private bool bFlightCompleted = false;
         private bool bFirstData = true;
         private bool bLastEngineStatus;
@@ -163,12 +163,10 @@ namespace BushDiversTracker
             public double heading_m;
             public double heading_t;
             public double gforce;
-            public double eng1_rpm;
-            public double eng2_rpm;
-            public double eng3_rpm;
-            public double eng4_rpm;
-            public double eng5_rpm;
-            public double eng6_rpm;
+            public int eng1_rpm;
+            public int eng2_rpm;
+            public int eng3_rpm;
+            public int eng4_rpm;
             public double aircraft_max_rpm;
             public double max_rpm_attained;
             public int zulu_time;
@@ -268,12 +266,10 @@ namespace BushDiversTracker
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PLANE HEADING DEGREES MAGNETIC", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PLANE HEADING DEGREES TRUE", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "G FORCE", "GForce", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG PCT MAX RPM:1", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG PCT MAX RPM:2", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG PCT MAX RPM:3", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG PCT MAX RPM:4", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG PCT MAX RPM:5", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG PCT MAX RPM:6", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:1", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:2", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:3", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:4", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "MAX RATED ENGINE RPM", "Rpm", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG MAX REACHED RPM", "Rpm", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ZULU TIME", "seconds", SIMCONNECT_DATATYPE.INT32, 1E+09f, SimConnect.SIMCONNECT_UNUSED);
@@ -383,7 +379,7 @@ namespace BushDiversTracker
             {
                 Struct1 data1 = (Struct1)data.dwData[0];
                 // engine status
-                flag = (data1.eng1_rpm > 1.0 || data1.eng2_rpm > 1.0 || data1.eng3_rpm > 1.0 || data1.eng4_rpm > 1.0 || data1.eng5_rpm > 1.0 ? 1 : (data1.eng6_rpm > 1.0 ? 1 : 0)) != 0;
+                bEnginesRunning = data1.eng1_rpm > 0 || data1.eng2_rpm > 0 || data1.eng3_rpm > 0 || data1.eng4_rpm > 0;
 
                 if (!bFlightTracking)
                     return;
@@ -439,7 +435,7 @@ namespace BushDiversTracker
                     lblDistanceLabel.Visibility = Visibility.Visible;
                 }
 
-                if (flag && bFirstData)
+                if (bEnginesRunning && bFirstData)
                 {
                     bLastEngineStatus = false;
                     bFirstData = false;
@@ -449,7 +445,7 @@ namespace BushDiversTracker
                 }
 
                 // Checks for start of flight and sets offblocks time
-                if (flag && Convert.ToBoolean(data1.on_ground) && !bLastEngineStatus)
+                if (bEnginesRunning && Convert.ToBoolean(data1.on_ground) && !bLastEngineStatus)
                 {
                     startLat = data1.latitude;
                     startLon = data1.longitude;
@@ -489,7 +485,7 @@ namespace BushDiversTracker
                 if (bEndFlight)
                 {
                     // only end flight if on ground with engines off
-                    if (!flag && Convert.ToBoolean(data1.on_ground))
+                    if (!bEnginesRunning && Convert.ToBoolean(data1.on_ground))
                     {
                         bFlightCompleted = true;
                         bFlightTracking = false;
@@ -513,7 +509,7 @@ namespace BushDiversTracker
                         // btnStop.Visibility = Visibility.Visible;
                         btnSubmit.IsEnabled = true;
 
-                        bLastEngineStatus = flag;
+                        bLastEngineStatus = bEnginesRunning;
                         bEndFlight = false;
                         btnEndFlight.IsEnabled = false;
                         lblEnd.Visibility = Visibility.Hidden;
@@ -559,7 +555,7 @@ namespace BushDiversTracker
                     dataLastSent = DateTime.UtcNow;
                 }
 
-                bLastEngineStatus = flag;
+                bLastEngineStatus = bEnginesRunning;
 
                 lastAltitude = data1.indicated_altitude;
                 lastHeading = data1.heading_m;
@@ -664,7 +660,7 @@ namespace BushDiversTracker
             btnStart.IsEnabled = false;
 
             // Todo, tidy this up
-            if (flag)
+            if (bEnginesRunning)
             {
                 MessageBox.Show("Your engine(s) must be off before starting", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 lblStart.Visibility = Visibility.Collapsed;
