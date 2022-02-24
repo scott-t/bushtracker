@@ -17,14 +17,19 @@ namespace BushDiversTracker.Services
         //protected string baseUrl = "http://localhost:8000/api";
         HttpClient _http = new HttpClient();
 
+        public APIService()
+        {
+            _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            var thisAssembly = System.Windows.Application.ResourceAssembly.GetName();
+            _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(thisAssembly.Name, thisAssembly.Version.ToString()));
+        }
+
         /// <summary>
         /// Gets dispatch cargo/pax data
         /// </summary>
         /// <returns>Collection of cargo</returns>
         public async Task<ICollection<DispatchCargo>> GetDispatchCargoAsync()
         {
-            AddHeaders();
-            _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             HttpResponseMessage res = await _http.GetAsync($"{baseUrl}/dispatch/cargo");
             if (res.StatusCode == HttpStatusCode.OK)
             {
@@ -49,8 +54,9 @@ namespace BushDiversTracker.Services
         /// <returns>Dispatch information</returns>
         public async Task<Dispatch> GetDispatchInfoAsync()
         {
-            AddHeaders();
-            _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            // First 'dispatch' call should update auth details
+            AddAuthHeaders();
+
             HttpResponseMessage res = await _http.GetAsync($"{baseUrl}/dispatch");
             if (res.StatusCode == HttpStatusCode.OK)
             {
@@ -59,6 +65,9 @@ namespace BushDiversTracker.Services
             else if (res.StatusCode == HttpStatusCode.Unauthorized)
             {
                 var msg = "Unauthorised";
+                // Basic check
+                if (!System.Text.RegularExpressions.Regex.IsMatch(Properties.Settings.Default.Key, @"^\d+\|.{40}.*$"))
+                    msg += " - API key does not match expected format";
                 throw new Exception(msg);
             }
             else
@@ -76,7 +85,6 @@ namespace BushDiversTracker.Services
         /// <returns>New location feedback</returns>
         public async Task<NewLocationResponse> PostNewLocationAsync(NewLocationRequest newLocation)
         {
-            AddHeaders();
             HttpResponseMessage res = await _http.PostAsJsonAsync($"{baseUrl}/pirep/destination", newLocation);
             if (res.StatusCode == HttpStatusCode.OK)
             {
@@ -102,7 +110,6 @@ namespace BushDiversTracker.Services
         /// <returns>true of logged successfully</returns>
         public async Task<bool> PostFlightLogAsync(FlightLog flightLog)
         {
-            AddHeaders();
             HttpResponseMessage res = await _http.PostAsJsonAsync($"{baseUrl}/log", flightLog);
             if (res.StatusCode == HttpStatusCode.Created)
             {
@@ -123,7 +130,6 @@ namespace BushDiversTracker.Services
         /// <returns>true if submission was successful</returns>
         public async Task<bool> PostPirepAsync(Pirep pirep)
         {
-            AddHeaders();
             HttpResponseMessage res = await _http.PostAsJsonAsync($"{baseUrl}/pirep/submit", pirep);
             if (res.StatusCode == HttpStatusCode.OK)
             {
@@ -143,8 +149,6 @@ namespace BushDiversTracker.Services
         /// <returns>true if successful</returns>
         public async Task<bool> CancelTrackingAsync()
         {
-            AddHeaders();
-            _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             HttpResponseMessage res = await _http.GetAsync($"{baseUrl}/pirep/reset");
             if (res.StatusCode == HttpStatusCode.OK)
             {
@@ -165,7 +169,6 @@ namespace BushDiversTracker.Services
         /// <returns>true if successful</returns>
         public async Task<bool> PostPirepStatusAsync(PirepStatus pirepStatus)
         {
-            AddHeaders();
             HttpResponseMessage res = await _http.PostAsJsonAsync($"{baseUrl}/pirep/status", pirepStatus);
             if (res.StatusCode == HttpStatusCode.OK)
             {
@@ -194,7 +197,7 @@ namespace BushDiversTracker.Services
         /// <summary>
         /// Adds default headers to a request
         /// </summary>
-        protected void AddHeaders()
+        protected void AddAuthHeaders()
         {
             _http.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", Properties.Settings.Default.Key);
