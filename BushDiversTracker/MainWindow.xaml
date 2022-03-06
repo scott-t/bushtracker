@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:BushDiversTracker"
         mc:Ignorable="d"
         SizeToContent="WidthAndHeight"
-        Title="Bush Tracker" Background="White"
+        Title="Bush Tracker" Background="White" Closing="Window_Closing"
         >
     <Grid Width="755">
         <Grid.ColumnDefinitions>

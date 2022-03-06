@@ -88,7 +88,7 @@ namespace BushDiversTracker
         private bool bFlightTracking = false;
         private bool bEndFlight = false;
         private bool bReady = false;
-        private bool flag = false;
+        private bool bEnginesRunning = false;
         private bool bFlightCompleted = false;
         private bool bFirstData = true;
         private bool bLastEngineStatus;
@@ -122,10 +122,12 @@ namespace BushDiversTracker
         enum DEFINITIONS
         {
             Struct1,
+            LandingStruct
         }
         enum DAT_REQUESTS
         {
             REQUEST_1,
+            REQUEST_2,
         }
 
         // items to set in sim
@@ -163,12 +165,10 @@ namespace BushDiversTracker
             public double heading_m;
             public double heading_t;
             public double gforce;
-            public double eng1_rpm;
-            public double eng2_rpm;
-            public double eng3_rpm;
-            public double eng4_rpm;
-            public double eng5_rpm;
-            public double eng6_rpm;
+            public int eng1_rpm;
+            public int eng2_rpm;
+            public int eng3_rpm;
+            public int eng4_rpm;
             public double aircraft_max_rpm;
             public double max_rpm_attained;
             public int zulu_time;
@@ -183,13 +183,6 @@ namespace BushDiversTracker
             public int is_unlimited;
             public int payload_station_count;
             public double payload_station_weight;
-            public double touchdown_bank;
-            public double touchdown_heading_m;
-            public double touchdown_heading_t;
-            public double touchdown_lat;
-            public double touchdown_lon;
-            public double touchdown_velocity;
-            public double touchdown_pitch;
             public double max_g;
             public double min_g;
             public double eng_damage_perc;
@@ -203,6 +196,18 @@ namespace BushDiversTracker
             public string atcModel;
             public double total_weight;
         };
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+        public struct LandingStruct
+        {
+            public double touchdown_bank;
+            public double touchdown_heading_m;
+            public double touchdown_heading_t;
+            public double touchdown_lat;
+            public double touchdown_lon;
+            public double touchdown_velocity;
+            public double touchdown_pitch;
+        }
 
         protected HwndSource GetHWinSource() => PresentationSource.FromVisual((Visual)this) as HwndSource;
 
@@ -235,15 +240,14 @@ namespace BushDiversTracker
                 try
                 {
                     simConnect.RequestDataOnSimObjectType(DAT_REQUESTS.REQUEST_1, DEFINITIONS.Struct1, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
-                    return;
                 }
                 catch (COMException ex)
                 {
                     Console.WriteLine(ex.Message);
-                    return;
                 }
             }
-            OpenConnection();
+            else
+                OpenConnection();
         }
 
         /// <summary>
@@ -269,12 +273,10 @@ namespace BushDiversTracker
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PLANE HEADING DEGREES MAGNETIC", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PLANE HEADING DEGREES TRUE", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "G FORCE", "GForce", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG PCT MAX RPM:1", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG PCT MAX RPM:2", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG PCT MAX RPM:3", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG PCT MAX RPM:4", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG PCT MAX RPM:5", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG PCT MAX RPM:6", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:1", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:2", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:3", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:4", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "MAX RATED ENGINE RPM", "Rpm", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG MAX REACHED RPM", "Rpm", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ZULU TIME", "seconds", SIMCONNECT_DATATYPE.INT32, 1E+09f, SimConnect.SIMCONNECT_UNUSED);
@@ -287,13 +289,6 @@ namespace BushDiversTracker
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "UNLIMITED FUEL", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PAYLOAD STATION COUNT", "Number", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PAYLOAD STATION WEIGHT:1", "Pounds", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PLANE TOUCHDOWN BANK DEGREES", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PLANE TOUCHDOWN HEADING DEGREES MAGNETIC", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PLANE TOUCHDOWN HEADING DEGREES TRUE", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PLANE TOUCHDOWN LATITUDE", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PLANE TOUCHDOWN LONGITUDE", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PLANE TOUCHDOWN NORMAL VELOCITY", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PLANE TOUCHDOWN PITCH DEGREES", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "MAX G FORCE", "Gforce", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "MIN G FORCE", "Gforce", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG DAMAGE PERCENT", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
@@ -310,8 +305,20 @@ namespace BushDiversTracker
                 // IMPORTANT: register it with the simconnect managed wrapper marshaller
                 simConnect.RegisterDataDefineStruct<Struct1>(DEFINITIONS.Struct1);
 
+                simConnect.AddToDataDefinition(DEFINITIONS.LandingStruct, "PLANE TOUCHDOWN BANK DEGREES", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.LandingStruct, "PLANE TOUCHDOWN HEADING DEGREES MAGNETIC", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.LandingStruct, "PLANE TOUCHDOWN HEADING DEGREES TRUE", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.LandingStruct, "PLANE TOUCHDOWN LATITUDE", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.LandingStruct, "PLANE TOUCHDOWN LONGITUDE", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.LandingStruct, "PLANE TOUCHDOWN NORMAL VELOCITY", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.LandingStruct, "PLANE TOUCHDOWN PITCH DEGREES", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.RegisterDataDefineStruct<LandingStruct>(DEFINITIONS.LandingStruct);
+
                 // catch a simobject data request
                 simConnect.OnRecvSimobjectDataBytype += new SimConnect.RecvSimobjectDataBytypeEventHandler(simConnect_OnRecvSimobjectDataBytype);
+
+                simConnect.RequestDataOnSimObject(DAT_REQUESTS.REQUEST_2, DEFINITIONS.LandingStruct, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD.SECOND, SIMCONNECT_DATA_REQUEST_FLAG.CHANGED, 0, 0, 0);
+                simConnect.OnRecvSimobjectData += new SimConnect.RecvSimobjectDataEventHandler(simConnect_OnRecvSimobjectData);
 
             }
             catch (COMException ex)
@@ -380,11 +387,11 @@ namespace BushDiversTracker
         /// <param name="data">Data received from sim.</param>
         private void simConnect_OnRecvSimobjectDataBytype(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA_BYTYPE data)
         {
-            if (data.dwRequestID == 0U)
+            if (data.dwRequestID == (uint)DAT_REQUESTS.REQUEST_1)
             {
                 Struct1 data1 = (Struct1)data.dwData[0];
                 // engine status
-                flag = (data1.eng1_rpm > 1.0 || data1.eng2_rpm > 1.0 || data1.eng3_rpm > 1.0 || data1.eng4_rpm > 1.0 || data1.eng5_rpm > 1.0 ? 1 : (data1.eng6_rpm > 1.0 ? 1 : 0)) != 0;
+                bEnginesRunning = data1.eng1_rpm > 0 || data1.eng2_rpm > 0 || data1.eng3_rpm > 0 || data1.eng4_rpm > 0;
 
                 if (!bFlightTracking)
                     return;
@@ -429,6 +436,8 @@ namespace BushDiversTracker
                         lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#16A34A"));
                         lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BBF7D0"));
 
+                        // Clear landing rate so next change event as per simconnect is viewed as 'new'
+                        landingRate = 0.0;
                     } else
                     {
                         bReady = false;
@@ -440,14 +449,17 @@ namespace BushDiversTracker
                     lblDistanceLabel.Visibility = Visibility.Visible;
                 }
 
-                if (flag && bFirstData)
+                if (bEnginesRunning && bFirstData)
                 {
                     bLastEngineStatus = false;
                     bFirstData = false;
+                    // fix starting of engines during pre-start tests (but after initial 'engine off' test)
+                    lastLat = data1.latitude;
+                    lastLon = data1.longitude;
                 }
 
                 // Checks for start of flight and sets offblocks time
-                if (flag && Convert.ToBoolean(data1.on_ground) && !bLastEngineStatus)
+                if (bEnginesRunning && Convert.ToBoolean(data1.on_ground) && !bLastEngineStatus)
                 {
                     startLat = data1.latitude;
                     startLon = data1.longitude;
@@ -487,7 +499,7 @@ namespace BushDiversTracker
                 if (bEndFlight)
                 {
                     // only end flight if on ground with engines off
-                    if (!flag && Convert.ToBoolean(data1.on_ground))
+                    if (!bEnginesRunning && Convert.ToBoolean(data1.on_ground))
                     {
                         bFlightCompleted = true;
                         bFlightTracking = false;
@@ -502,16 +514,11 @@ namespace BushDiversTracker
                         endLon = data1.longitude;
                         // endTime = HelperService.SetZuluTime(data1.zulu_time).ToString("yyyy-MM-dd HH:mm:ss");
                         endTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-                        landingRate = data1.touchdown_velocity;
-                        landingPitch = data1.touchdown_pitch;
-                        landingBank = data1.touchdown_bank;
-                        landingLat = data1.touchdown_lat;
-                        landingLon = data1.touchdown_lon;
 
                         // btnStop.Visibility = Visibility.Visible;
                         btnSubmit.IsEnabled = true;
 
-                        bLastEngineStatus = flag;
+                        bLastEngineStatus = bEnginesRunning;
                         bEndFlight = false;
                         btnEndFlight.IsEnabled = false;
                         lblEnd.Visibility = Visibility.Hidden;
@@ -557,11 +564,27 @@ namespace BushDiversTracker
                     dataLastSent = DateTime.UtcNow;
                 }
 
-                bLastEngineStatus = flag;
+                bLastEngineStatus = bEnginesRunning;
 
                 lastAltitude = data1.indicated_altitude;
                 lastHeading = data1.heading_m;
                 lastVs = data1.vspeed;
+            }
+        }
+
+        private void simConnect_OnRecvSimobjectData(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA data)
+        {
+            if (data.dwRequestID == (uint)DAT_REQUESTS.REQUEST_2)
+            {
+                LandingStruct data1 = (LandingStruct)data.dwData[0];
+                if (landingRate < data1.touchdown_velocity)
+                {
+                    landingRate = data1.touchdown_velocity;
+                    landingPitch = data1.touchdown_pitch;
+                    landingBank = data1.touchdown_bank;
+                    landingLat = data1.touchdown_lat;
+                    landingLon = data1.touchdown_lon;
+                }
             }
         }
 
@@ -612,7 +635,10 @@ namespace BushDiversTracker
                 simConnect.Dispose();
                 simConnect = null;
             }
-            this.timer.Stop();
+
+            if (timer != null)
+                timer.Stop();
+
             elConnection.Fill = Brushes.Red;
             elConnection.Stroke = Brushes.Red;
             btnConnect.IsEnabled = true;
@@ -657,7 +683,9 @@ namespace BushDiversTracker
         {
             lblStart.Visibility = Visibility.Visible;
             btnStart.IsEnabled = false;
-            if (flag)
+
+            // Todo, tidy this up
+            if (bEnginesRunning)
             {
                 MessageBox.Show("Your engine(s) must be off before starting", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 lblStart.Visibility = Visibility.Collapsed;
@@ -667,6 +695,10 @@ namespace BushDiversTracker
 
             bFlightTracking = true;
             lblErrorText.Visibility = Visibility.Hidden;
+            timer.Stop();
+            // Might still get a double-fire if the dispatch is ready to send or even if the timer has ticked but response yet to be received - "shouldn't" be an issue
+            Timer_Tick(null, null);
+            timer.Start();
         }
 
         private async void btnSubmit_Click(object sender, RoutedEventArgs e)
@@ -708,6 +740,29 @@ namespace BushDiversTracker
             UpdateDispatchWeight();
         }
 
+        private async void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (bReady)
+            {
+                if (MessageBox.Show("A flight is currently in progress. You will need to restart your flight at a later time.\n\nAre you sure you wish to quit?", "Cancel current flight?", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                {
+                    e.Cancel = true;
+
+                    await StopTracking();
+                    if (!bReady || MessageBox.Show("There was an error cancelling your flight. If you continue you will need to cancel your dispatch via the web.\n\nQuit anyway?", "Quit?", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                    {
+                        bReady = false;
+                        ((Window)sender).Close();
+                    }
+                }
+                else
+                    e.Cancel = true;
+            }
+
+            if (!e.Cancel)
+                CloseConnection();
+        }
+
         #endregion
 
 
@@ -735,7 +790,15 @@ namespace BushDiversTracker
                 Distance = currentDistance
             };
 
-            await _api.PostFlightLogAsync(log);
+            try
+            {
+                await _api.PostFlightLogAsync(log);
+            }
+            catch (Exception)
+            {
+                lblErrorText.Text = "Error submitting flight update";
+                lblErrorText.Visibility = Visibility.Visible;
+            }
         }
 
         /// <summary>
@@ -788,10 +851,22 @@ namespace BushDiversTracker
                 Distance = currentDistance
             };
 
-            var res = await _api.PostPirepAsync(pirep);
+            bool res = false;
+            try
+            {
+                res = await _api.PostPirepAsync(pirep);
+            }
+            catch (Exception)
+            {
+                lblErrorText.Text = "Error submitting to server";
+                lblErrorText.Visibility = Visibility.Visible;
+            }
+
             if (res)
             {
                 lblSubmitting.Visibility = Visibility.Hidden;
+                lblErrorText.Text = "";
+                lblErrorText.Visibility = Visibility.Hidden;
                 MessageBox.Show("Pirep submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Information);
                 TidyUpAfterPirepSubmission();
             }
@@ -801,7 +876,6 @@ namespace BushDiversTracker
                 MessageBox.Show("Pirep Not Submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
                 btnSubmit.IsEnabled = true;
             }
-
         }
 
         /// <summary>
@@ -855,18 +929,33 @@ namespace BushDiversTracker
         /// <summary>
         /// Cancels the tracking and progress of a flight
         /// </summary>
-        private async void StopTracking()
+        private async Task StopTracking()
         {
-            ClearVariables();
-            lblDistance.Visibility = Visibility.Hidden;
-            lblDistanceLabel.Visibility = Visibility.Hidden;
-            // reset pirep to draft and remove any logs
-            var res = await _api.CancelTrackingAsync();
+            btnStop.IsEnabled = false;
+
+            bool res = false;
+            try
+            {
+                res = await _api.CancelTrackingAsync();
+            }
+            catch (Exception)
+            {
+                lblErrorText.Text = "Error submitting to server";
+                lblErrorText.Visibility = Visibility.Visible;
+            }
+
             if (res)
             {
+                ClearVariables();
+                lblDistance.Visibility = Visibility.Hidden;
+                lblDistanceLabel.Visibility = Visibility.Hidden;
+                // reset pirep to draft and remove any logs
+
                 lblStatusText.Text = "Tracking Stopped";
                 lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
                 lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
+                lblErrorText.Text = "";
+                lblErrorText.Visibility = Visibility.Hidden;
                 btnStop.Visibility = Visibility.Hidden;
                 btnStart.Visibility = Visibility.Visible;
                 btnStart.IsEnabled = true;
@@ -877,6 +966,7 @@ namespace BushDiversTracker
                 lblErrorText.Text = "Issue cancelling pirep";
                 lblErrorText.Visibility = Visibility.Visible;
             }
+            btnStop.IsEnabled = true;
         }
 
         /// <summary>
@@ -1056,5 +1146,6 @@ namespace BushDiversTracker
             }
         }
         #endregion
+
     }
 }
