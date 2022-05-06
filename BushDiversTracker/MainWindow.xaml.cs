@@ -711,8 +711,11 @@ namespace BushDiversTracker
 
         private void btnStop_Click(object sender, RoutedEventArgs e)
         {
-            StopTracking();
-            lblErrorText.Visibility = Visibility.Hidden;
+            if (MessageBox.Show("If you cancel you will need to restart your flight at a later time.\n\nAre you sure you wish to cancel your flight?", "Cancel?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {   
+                StopTracking();
+                lblErrorText.Visibility = Visibility.Hidden;
+            }
         }
 
         private void btnConnect_Click(object sender, RoutedEventArgs e)
