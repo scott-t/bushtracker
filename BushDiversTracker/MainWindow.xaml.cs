@@ -711,8 +711,11 @@ namespace BushDiversTracker
 
         private void btnStop_Click(object sender, RoutedEventArgs e)
         {
-            StopTracking();
-            lblErrorText.Visibility = Visibility.Hidden;
+            if (MessageBox.Show("If you cancel you will need to restart your flight at a later time.\n\nAre you sure you wish to cancel your flight?", "Cancel?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {   
+                StopTracking();
+                lblErrorText.Visibility = Visibility.Hidden;
+            }
         }
 
         private void btnConnect_Click(object sender, RoutedEventArgs e)
@@ -1041,8 +1044,11 @@ namespace BushDiversTracker
 
 
             // check fuel qty matches planned fuel
-            var maxVal = decimal.ToDouble(dispatchData.PlannedFuel) + 5;
-            var minVal = decimal.ToDouble(dispatchData.PlannedFuel) - 5;
+            var tolerance = decimal.ToDouble(dispatchData.PlannedFuel) * .01;
+            if (tolerance < 5.0)
+                tolerance = 5;
+            var maxVal = decimal.ToDouble(dispatchData.PlannedFuel) + tolerance;
+            var minVal = decimal.ToDouble(dispatchData.PlannedFuel) - tolerance;
             //var isFuelValid = Enumerable.Range(Convert.ToInt32(minVal), Convert.ToInt32(maxVal)).Contains(Convert.ToInt32(data.Fuel));
             //if (data.Fuel <= max && data.Fuel >= min)
             if (!(minVal <= data.Fuel) || !(data.Fuel <= maxVal))
