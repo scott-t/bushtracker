@@ -833,10 +833,15 @@ namespace BushDiversTracker
                 catch (Exception ex)
                 {
                     lblSubmitting.Visibility = Visibility.Hidden;
-                    MessageBox.Show("Error finding alternate airport", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
-                    lblErrorText.Text = ex.Message;
+                    MessageBox.Show("Unable to find landing airport.\n\nPlease resume flying and land within 2NM of an airport", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
+                    lblErrorText.Text = "No airport within 2NM";
                     lblErrorText.Visibility = Visibility.Visible;
-                    btnSubmit.IsEnabled = true;
+                    bEndFlight = false;
+                    bFlightTracking = true;
+                    btnSubmit.IsEnabled = false;
+                    btnEndFlight.IsEnabled = true;
+                    lblEnd.Visibility = Visibility.Hidden;
+                    return;
                 }
             }
 
