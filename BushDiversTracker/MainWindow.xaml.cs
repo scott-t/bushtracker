@@ -104,7 +104,7 @@ namespace BushDiversTracker
         private double currentFuelQty;
         private string startTime;
         private string endTime;
-        protected int flightStatus;
+        private PirepStatusType flightStatus;
         protected double lastHeading;
         protected double lastAltitude;
         protected double landingRate;
@@ -466,7 +466,7 @@ namespace BushDiversTracker
                     // startTime = HelperService.SetZuluTime(data1.zulu_time).ToString("yyyy-MM-dd HH:mm:ss");
                     startTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
                     startFuelQty = data1.fuel_qty;
-                    flightStatus = Convert.ToInt32(PirepStatusType.BOARDING);
+                    flightStatus = PirepStatusType.BOARDING;
                     lblStatusText.Text = "Pre-flight|Loading";
                     SendTextToSim("Bush Tracker Status: Pre-Flight - Ready");
                     lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
@@ -474,9 +474,9 @@ namespace BushDiversTracker
                 }
 
                 // check for take off
-                if (flightStatus == Convert.ToInt32(PirepStatusType.BOARDING) && !Convert.ToBoolean(data1.on_ground))
+                if (flightStatus == PirepStatusType.BOARDING && !Convert.ToBoolean(data1.on_ground))
                 {
-                    flightStatus = Convert.ToInt32(PirepStatusType.DEPARTED);
+                    flightStatus = PirepStatusType.DEPARTED;
                     lblStatusText.Text = "Departed";
                     lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
                     lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
@@ -485,9 +485,9 @@ namespace BushDiversTracker
                 }
 
                 // check for landed
-                if (flightStatus == Convert.ToInt32(PirepStatusType.DEPARTED) && Convert.ToBoolean(data1.on_ground))
+                if (flightStatus == PirepStatusType.DEPARTED && Convert.ToBoolean(data1.on_ground))
                 {
-                    flightStatus = Convert.ToInt32(PirepStatusType.APPROACH);
+                    flightStatus = PirepStatusType.APPROACH;
                     lblStatusText.Text = "Landed";
                     lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
                     lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
@@ -503,7 +503,7 @@ namespace BushDiversTracker
                     {
                         bFlightCompleted = true;
                         bFlightTracking = false;
-                        flightStatus = Convert.ToInt32(PirepStatusType.ARRIVED);
+                        flightStatus = PirepStatusType.ARRIVED;
                         lblStatusText.Text = "Flight ended";
                         lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#16A34A"));
                         lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BBF7D0"));
@@ -706,7 +706,7 @@ namespace BushDiversTracker
             lblSubmitting.Visibility = Visibility.Visible;
             btnSubmit.IsEnabled = false;
             lblErrorText.Visibility = Visibility.Hidden;
-            EndFlight();
+            SubmitFlight();
         }
 
         private void btnStop_Click(object sender, RoutedEventArgs e)
@@ -807,7 +807,7 @@ namespace BushDiversTracker
         /// <summary>
         /// Ends a flight and submits the pirep
         /// </summary>
-        public async void EndFlight()
+        public async void SubmitFlight()
         {
             // check distance
             var distance = HelperService.CalculateDistance(Convert.ToDouble(txtArrLat.Text), Convert.ToDouble(txtArrLon.Text), endLat, endLon, true);
@@ -921,7 +921,7 @@ namespace BushDiversTracker
             endFuelQty = 0;
             startTime = "";
             endTime = "";
-            flightStatus = Convert.ToInt32(PirepStatusType.BOARDING);
+            flightStatus = PirepStatusType.BOARDING;
             lastHeading = 0;
             lastAltitude = 0;
             // stop simconnect tracking
