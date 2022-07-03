@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BushDiversTracker.Services
@@ -177,6 +178,27 @@ namespace BushDiversTracker.Services
             else
             {
                 return false;
+            }
+        }
+
+        public async Task<ICollection<AddonResource>> GetAddonResources()
+        {
+            HttpResponseMessage res = await _http.GetAsync($"{baseUrl}/resources");
+            if (res.StatusCode == HttpStatusCode.OK)
+            {
+                var ret = await res.Content.ReadFromJsonAsync<AddonResult>(HelperService.SerializerOptions);
+                return ret.AddonResources;
+            }
+            else if (res.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                var msg = "Unauthorised";
+                throw new Exception(msg);
+            }
+            else
+            {
+                string msg = await res.Content.ReadAsStringAsync();
+                HelperService.WriteToLog($"Retrieving addons: {res.ReasonPhrase}");
+                throw new Exception($"Retrieving addons: {res.ReasonPhrase}");
             }
         }
 

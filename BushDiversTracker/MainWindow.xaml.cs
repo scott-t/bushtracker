@@ -2,19 +2,9 @@ using BushDiversTracker.Models;
 using BushDiversTracker.Models.Enums;
 using BushDiversTracker.Services;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Microsoft.FlightSimulator.SimConnect;
 using System.Runtime.InteropServices;
 using System.Windows.Threading;
@@ -32,6 +22,7 @@ namespace BushDiversTracker
     public partial class MainWindow : Window
     {
         APIService _api;
+        AddonBrowser _addonBrowser;
 
         public MainWindow()
         {
@@ -745,6 +736,16 @@ namespace BushDiversTracker
 
         private async void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            if (_addonBrowser != null && _addonBrowser.IsVisible)
+            {
+                _addonBrowser.Close();
+                if (_addonBrowser != null)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+
             if (bReady)
             {
                 if (MessageBox.Show("A flight is currently in progress. You will need to restart your flight at a later time.\n\nAre you sure you wish to quit?", "Cancel current flight?", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
@@ -1158,5 +1159,19 @@ namespace BushDiversTracker
         }
         #endregion
 
+        private void btnAddons_Click(object sender, RoutedEventArgs e)
+        {
+            if (_addonBrowser == null)
+            {
+                _addonBrowser = new AddonBrowser();
+                _addonBrowser.Closed += delegate { _addonBrowser = null; };
+                _addonBrowser.Show();
+            }
+            else
+            {
+                _addonBrowser.Focus();
+            }
+            
+        }
     }
 }

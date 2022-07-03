@@ -3,12 +3,52 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BushDiversTracker.Services
 {
     class HelperService
     {
+        /// <summary>
+        /// Convert to/from string and Version class
+        /// </summary>
+        internal class VersionJsonConverter : System.Text.Json.Serialization.JsonConverter<Version>
+        {
+            public override Version Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                string ver = reader.GetString();
+                try 
+                {
+                    return new Version(ver);
+                }
+                catch { }
+
+                if (ver.Contains('-'))
+                {
+                    ver = ver.Substring(0, ver.IndexOf('-'));
+                    try
+                    {
+                        return new Version(ver);
+                    }
+                    catch { }
+                }
+                return new Version();
+            }
+            public override void Write(Utf8JsonWriter writer, Version value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(value.ToString());
+            }
+        }
+
+        public static readonly JsonSerializerOptions SerializerOptions = new()
+        {
+            Converters =
+            {
+                new VersionJsonConverter()
+            }
+        };
+
         /// <summary>
         /// Calculates the distance between two points
         /// </summary>
@@ -120,14 +160,63 @@ namespace BushDiversTracker.Services
             await _api.CancelTrackingAsync();
         }
 
+        /// <summary>
+        /// Convert gallons to litres
+        /// </summary>
+        /// <param name="gal">Gallons</param>
+        /// <returns>Litres</returns>
         public static decimal GalToLitre(decimal gal)
         {
             return gal * new decimal(3.785412);
         }
 
+        /// <summary>
+        /// Convert pounds to kilograms
+        /// </summary>
+        /// <param name="lbs">Pounds</param>
+        /// <returns>Kilograms</returns>
         public static decimal LbsToKG(decimal lbs)
         {
             return lbs * new decimal(0.453592);
         }
+
+        /// <summary>
+        /// Find the local community package path
+        /// </summary>
+        /// <returns></returns>
+        public static string GetPackagePath()
+        {
+            string path = Properties.Settings.Default.CommunityDir;
+
+            if (File.Exists(path))
+                return path;
+
+            // Go searching
+            path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Microsoft Flight Simulator\\UserCfg.opt";
+            if (!File.Exists(path))
+            {
+                path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Packages\\Microsoft.FlightSimulator_8wekyb3d8bbwe\\LocalCache\\UserCfg.opt";
+                if (!File.Exists(path))
+                    return null; // Couldn't find on Steam or Store
+            }
+
+            var lines = File.ReadAllLines(path);
+            if (lines.Length == 0)
+                return null;
+
+            path = lines.FirstOrDefault(line => line.StartsWith("InstalledPackagesPath "));
+            if (path.Length == 0)
+                return null;
+
+            path = path[23..^1] + "\\Community";
+            if (!Directory.Exists(path))
+                return null; // Give up
+
+            Properties.Settings.Default.CommunityDir = path;
+            Properties.Settings.Default.Save();
+
+            return path;
+        }
+
     }
 }

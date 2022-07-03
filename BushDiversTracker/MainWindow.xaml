@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:BushDiversTracker"
         mc:Ignorable="d"
         SizeToContent="WidthAndHeight"
-        Title="Bush Tracker" Background="White" Closing="Window_Closing"
+        Title="Bush Tracker" Background="White" Closing="Window_Closing" ResizeMode="CanMinimize"
         >
     <Grid Width="755">
         <Grid.ColumnDefinitions>
@@ -81,5 +81,6 @@
         <Label x:Name="lblSubmitting" Content="submitting..." HorizontalAlignment="Left" Margin="10,366,0,0" VerticalAlignment="Top" FontSize="10" RenderTransformOrigin="0.577,0.019"/>
         <RadioButton x:Name="rdoUnitUS" Content="US" Height="15" Margin="10,389,0,0" VerticalAlignment="Top" GroupName="unitOfMeasure" HorizontalAlignment="Left" Width="45" Checked="rdoUnitType_Checked"/>
         <RadioButton x:Name="rdoUnitMetric" Content="Metric" HorizontalAlignment="Left" Height="15" Margin="55,389,0,0" VerticalAlignment="Top" Width="53" GroupName="unitOfMeasure" Checked="rdoUnitType_Checked"/>
+        <Button x:Name="btnAddons" Content="BD Addons" Padding="5" Margin="643,415,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99" Click="btnAddons_Click"/>
     </Grid>
 </Window>
