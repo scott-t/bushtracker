@@ -51,6 +51,8 @@ namespace BushDiversTracker
             foreach (var res in ResourceList)
                 res.InstalledPackage = null;
 
+            List<string> packageList = new();
+
             foreach (var addon in System.IO.Directory.EnumerateDirectories(Properties.Settings.Default.CommunityDir))
             {
                 if (!System.IO.File.Exists(addon + "\\manifest.json"))
@@ -60,12 +62,48 @@ namespace BushDiversTracker
                 var pkg = System.Text.Json.JsonSerializer.Deserialize<Models.NonApi.InstalledAddon>(manifest, Services.HelperService.SerializerOptions);
                 pkg.Filename = new System.IO.DirectoryInfo(addon).Name;
 
+                packageList.Add(pkg.Filename);
+
                 foreach (var res in ResourceList)
                     if (res.Filename == pkg.Filename)
                     {
                         res.InstalledPackage = pkg;
                         break;
                     }
+            }
+
+            foreach (var res in ResourceList)
+            {
+                if (res.Dependencies == null)
+                {
+                    res.DependencyInfo = Models.Enums.AddonDependencyStatus.OK;
+                    continue;
+                }
+
+                bool foundMandatory = true;
+                bool foundOptional = true;
+
+                foreach (var dep in res.Dependencies)
+                {
+                    if (!packageList.Contains(dep.Filename))
+                    {
+                        dep.Found = false;
+
+                        if (dep.Mandatory)
+                            foundMandatory = false;
+                        else
+                            foundOptional = false;
+                    }
+                    else
+                        dep.Found = true;
+                }
+
+                if (foundMandatory && foundOptional)
+                    res.DependencyInfo = Models.Enums.AddonDependencyStatus.OK;
+                else if (foundMandatory)
+                    res.DependencyInfo = Models.Enums.AddonDependencyStatus.MissingOptional;
+                else
+                    res.DependencyInfo = Models.Enums.AddonDependencyStatus.MissingMandatory;
             }
 
             UpdateInstallButton();
@@ -97,10 +135,13 @@ namespace BushDiversTracker
         {
             btnInstall.IsEnabled = lstAddons.SelectedItem != null;
             var item = (Models.AddonResource)lstAddons.SelectedItem;
-            if (item.Install)
-                btnInstall.Content = "Remove";
+            btnInstall.Visibility = !item.Install || item.NewVer ? Visibility.Visible : Visibility.Hidden;
+            if (item.NewVer)
+                btnInstall.Content = "Update";
             else
                 btnInstall.Content = "Install";
+
+            btnRemove.Visibility = item.Install ? Visibility.Visible : Visibility.Hidden;
         }
 
 
@@ -114,16 +155,49 @@ namespace BushDiversTracker
         async private void btnInstall_Click(object sender, RoutedEventArgs e)
         {
             var item = (Models.AddonResource)lstAddons.SelectedItem;
-            if (item.Install)
+            bool installDeps = false;
+            if (item.DependencyInfo == Models.Enums.AddonDependencyStatus.MissingMandatory)
             {
-                if (item.Filename.Length > 0
-                    && System.IO.Directory.Exists(Properties.Settings.Default.CommunityDir + "\\" + item.Filename)
-                    && MessageBox.Show("Remove the addon '" + item.Title + "'?", "Remove addon?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                    System.IO.Directory.Delete(Properties.Settings.Default.CommunityDir + "\\" + item.Filename, true);
+                if (item.Dependencies.Any((e) => e.Url?.Length == 0))
+                {
+                    var mbResult = MessageBox.Show("This addon requires additional dependencies.\n\nAlso install dependencies?", "Install dependencies?", MessageBoxButton.YesNoCancel);
+                    if (mbResult == MessageBoxResult.Cancel)
+                        return;
+                    else
+                        installDeps = mbResult == MessageBoxResult.Yes;
+                }
             }
-            else
-                await DownloadFile(item);
-            RescanAddons();
+
+            await InstallPackage(item, installDeps);
+
+            if (item.DependencyInfo == Models.Enums.AddonDependencyStatus.MissingMandatory
+                && item.Dependencies.Any((e) => e.Url?.Length > 0))
+                MessageBox.Show("Some dependencies must be installed externally. Check the dependency list for details.", "External dependencies", MessageBoxButton.OK);
+        }
+
+        async private Task InstallPackage(Models.AddonResource pkg, bool installDeps)
+        {
+            await DownloadFile(pkg);
+            RescanAddons(); // rescan here to break dependency loop
+
+            if (installDeps)
+            {
+                if (pkg.Dependencies == null)
+                    return;
+
+                foreach (var dep in pkg.Dependencies)
+                {
+                    // Don't need to install what's already installed or external
+                    if (dep.Found || dep.Url.Length > 0)
+                        continue;
+
+                    try
+                    {
+                        await InstallPackage(ResourceList.First((p) => p.Filename.Equals(dep.Filename)), true);
+                    }
+                    catch { }
+                }
+            }
         }
 
         async private Task DownloadFile(Models.AddonResource item)
@@ -179,6 +253,36 @@ namespace BushDiversTracker
             {
                 e.Cancel = true;
                 MessageBox.Show("Cannot close while downloading addons", "Error");
+            }
+        }
+
+        private void btnRemove_Click(object sender, RoutedEventArgs e)
+        {
+            var item = (Models.AddonResource)lstAddons.SelectedItem;
+            if (item.Filename.Length > 0
+                && System.IO.Directory.Exists(Properties.Settings.Default.CommunityDir + "\\" + item.Filename)
+                && MessageBox.Show("Remove the addon '" + item.Title + "'?", "Remove addon?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                System.IO.Directory.Delete(Properties.Settings.Default.CommunityDir + "\\" + item.Filename, true);
+                RescanAddons();
+            }
+        }
+
+        private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+        {
+            try
+            {
+                var link = (System.Windows.Documents.Hyperlink)sender;
+                var item = (Models.AddonDependency)link.DataContext;
+                if (item.Url.Length > 0)
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(item.Url) { UseShellExecute = true });
+                    e.Handled = true;
+                }
+            }
+            catch
+            {
+
             }
         }
     }

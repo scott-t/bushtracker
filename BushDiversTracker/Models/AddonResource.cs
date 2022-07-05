@@ -11,6 +11,39 @@ namespace BushDiversTracker.Models
         public string Category { get; set; }
     }
 
+    public class AddonDependency : INotifyPropertyChanged
+    {
+        [JsonPropertyName("filename")]
+        public string Filename { get; set; }
+        [JsonPropertyName("title")]
+        public string Title { get; set; }
+        [JsonPropertyName("mandatory")]
+        public bool Mandatory { get; set; }
+        [JsonPropertyName("url")]
+        public string Url { get; set; }
+
+        [JsonIgnore]
+        public bool Found { 
+            get { return _found; }
+            set
+            {
+                if (_found != value)
+                {
+                    _found = value;
+                    NotifyPropertyChanged("Found");
+                }
+
+            }
+        }
+        private bool _found;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        public void NotifyPropertyChanged(string propName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
+        }
+    }
+
     public class AddonResource : INotifyPropertyChanged
     {
         [JsonPropertyName("id")]
@@ -29,6 +62,10 @@ namespace BushDiversTracker.Models
         public AddonCategory Category { get; set; }
         [JsonPropertyName("url")]
         public string Url { get; set; }
+        [JsonPropertyName("calculated_file_size")]
+        public string Size { get; set; }
+        [JsonPropertyName("dependencies")]
+        public AddonDependency[] Dependencies { get; set; }
 
         [JsonIgnore]
         public Enums.AddonDependencyStatus DependencyInfo {
