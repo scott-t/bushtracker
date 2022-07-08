@@ -100,10 +100,13 @@ namespace BushDiversTracker
         protected double lastAltitude;
         protected double landingRate;
         protected double landingBank;
+        protected double landingGforce;
         protected double landingPitch;
         protected double landingLat;
         protected double landingLon;
         protected double lastVs;
+        protected double lastGforce;
+        protected bool lastOnground;
         protected DateTime dataLastSent;
 
         // sim connect setup variables
@@ -165,6 +168,7 @@ namespace BushDiversTracker
             public int zulu_time;
             public int local_time;
             public int on_ground;
+            public int surface_type;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 8)]
             public string atcId;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 8)]
@@ -177,10 +181,10 @@ namespace BushDiversTracker
             public double max_g;
             public double min_g;
             public double eng_damage_perc;
-            public int flap_damage;
-            public int gear_damage;
-            public int flap_speed_exceeded;
-            public int gear_speed_exceeded;
+            //public int flap_damage;
+            //public int gear_damage;
+            //public int flap_speed_exceeded;
+            //public int gear_speed_exceeded;
             public int eng_mp;
             public int fuel_flow;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 8)]
@@ -273,6 +277,7 @@ namespace BushDiversTracker
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ZULU TIME", "seconds", SIMCONNECT_DATATYPE.INT32, 1E+09f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "LOCAL TIME", "seconds", SIMCONNECT_DATATYPE.INT32, 1E+09f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "SIM ON GROUND", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "SURFACE TYPE", "Enum", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ATC ID", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ATC TYPE", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "FUEL TOTAL QUANTITY", "Gallons", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
@@ -283,10 +288,10 @@ namespace BushDiversTracker
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "MAX G FORCE", "Gforce", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "MIN G FORCE", "Gforce", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG DAMAGE PERCENT", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "FLAP DAMAGE BY SPEED", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GEAR DAMAGE BY SPEED", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "FLAP SPEED EXCEEDED", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GEAR SPEED EXCEEDED", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                //simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "FLAP DAMAGE BY SPEED", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                //simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GEAR DAMAGE BY SPEED", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                //simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "FLAP SPEED EXCEEDED", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                //simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GEAR SPEED EXCEEDED", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ENG MANIFOLD PRESSURE", "inHG", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ENG FUEL FLOW GPH", "Gallons per hour", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ATC MODEL", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
@@ -301,7 +306,7 @@ namespace BushDiversTracker
                 simConnect.AddToDataDefinition(DEFINITIONS.LandingStruct, "PLANE TOUCHDOWN HEADING DEGREES TRUE", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.LandingStruct, "PLANE TOUCHDOWN LATITUDE", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.LandingStruct, "PLANE TOUCHDOWN LONGITUDE", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.LandingStruct, "PLANE TOUCHDOWN NORMAL VELOCITY", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.LandingStruct, "PLANE TOUCHDOWN NORMAL VELOCITY", "Feet per minute", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.LandingStruct, "PLANE TOUCHDOWN PITCH DEGREES", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.RegisterDataDefineStruct<LandingStruct>(DEFINITIONS.LandingStruct);
 
@@ -465,7 +470,7 @@ namespace BushDiversTracker
                 }
 
                 // check for take off
-                if (flightStatus == PirepStatusType.BOARDING && !Convert.ToBoolean(data1.on_ground))
+                if (flightStatus == PirepStatusType.BOARDING && !Convert.ToBoolean(data1.on_ground) && data1.plane_altitude > 20) // arbitrary number to avoid advancing state on bouncy water takeoff
                 {
                     flightStatus = PirepStatusType.DEPARTED;
                     lblStatusText.Text = "Departed";
@@ -476,14 +481,46 @@ namespace BushDiversTracker
                 }
 
                 // check for landed
-                if (flightStatus == PirepStatusType.DEPARTED && Convert.ToBoolean(data1.on_ground))
+                if (flightStatus == PirepStatusType.DEPARTED || flightStatus == PirepStatusType.APPROACH)
                 {
-                    flightStatus = PirepStatusType.APPROACH;
-                    lblStatusText.Text = "Landed";
-                    lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
-                    lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
-                    btnEndFlight.IsEnabled = true;
-                    SendTextToSim("Bush Tracker Status: Landed");
+                    // Increase resolution in case of water ditch
+                    if (data1.plane_altitude < 500 && timer.Interval.Seconds > 2)
+                        timer.Interval = TimeSpan.FromSeconds(1.0);
+                    else if (data1.plane_altitude > 1000 && timer.Interval.Seconds < 8)
+                        timer.Interval = TimeSpan.FromSeconds(10.0);
+
+                    // If on ground
+                    if (Convert.ToBoolean(data1.on_ground))
+                    {
+                        // And we either slowing for land
+                        // 25knt arbitrary number to avoid advancing state on bouncy water takeoff)
+                        if (data1.airspeed_indicated < 25 && flightStatus != PirepStatusType.APPROACH)
+                        {
+                            flightStatus = PirepStatusType.APPROACH;
+                            lblStatusText.Text = "Landed";
+                            lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
+                            lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
+                            btnEndFlight.IsEnabled = true;
+                            SendTextToSim("Bush Tracker Status: Landed");
+                        }
+                        else if (!lastOnground && data1.surface_type == 2) // landed on water
+                        {
+                            var rate = -(data1.vspeed + lastVs) * 60.0 / 2.0;    // f/s to f/m... api needs f/s on the pirep progress log
+
+                            // In case of 'bounce' between the two refs
+                            if (rate < 0.0)
+                                rate = 0.0;
+
+                            if (landingRate < rate || (landingLat == 0.0 && landingLon == 0.0))
+                            {
+                                landingRate = rate;
+                                landingPitch = data1.ac_pitch;
+                                landingBank = data1.ac_bank;
+                                landingLat = data1.latitude;
+                                landingLon = data1.longitude;
+                            }
+                        }
+                    }
                 }
 
                 // check if user wants to end flight
@@ -560,6 +597,8 @@ namespace BushDiversTracker
                 lastAltitude = data1.indicated_altitude;
                 lastHeading = data1.heading_m;
                 lastVs = data1.vspeed;
+                lastGforce = data1.gforce;
+                lastOnground = Convert.ToBoolean(data1.on_ground);
             }
         }
 
