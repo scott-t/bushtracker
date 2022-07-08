@@ -15,7 +15,8 @@ namespace BushDiversTracker
     public partial class AddonBrowser : Window
     {
         internal Services.APIService _api;
-        public System.Collections.ObjectModel.ObservableCollection<Models.AddonResource> ResourceList { get; set; } = new();
+        public System.Collections.ObjectModel.ObservableCollection<Models.AddonResource> ResourceList { get; } = new();
+        internal List<string> OfficialPackageList { get; } = new();
 
         public AddonBrowser()
         {
@@ -43,35 +44,61 @@ namespace BushDiversTracker
             }
         }
 
+        /// <summary>
+        /// Rescan over addon list to re-check installed files, deps, etc
+        /// </summary>
         private async void RescanAddons()
         {
             if (Properties.Settings.Default.CommunityDir.Length == 0 || !System.IO.Directory.Exists(Properties.Settings.Default.CommunityDir))
                 return;
 
+            // Test official path and cache result
+            var officialPath = Services.HelperService.GetOfficialPath();
+            if (OfficialPackageList.Count == 0 && officialPath != null && System.IO.Directory.Exists(officialPath))
+            {
+                foreach (var addon in System.IO.Directory.EnumerateDirectories(officialPath))
+                {
+                    if (!System.IO.File.Exists(addon + "\\manifest.json"))
+                        continue;
+
+                    // Don't need to parse json (yet), just assume a dir with a manifest is an addon
+                    try
+                    {
+                        OfficialPackageList.Add(new System.IO.DirectoryInfo(addon).Name);
+                    }
+                    catch { } // Ignore
+                }
+            }
+
             foreach (var res in ResourceList)
                 res.InstalledPackage = null;
 
+            // Scan community package list
             List<string> packageList = new();
-
             foreach (var addon in System.IO.Directory.EnumerateDirectories(Properties.Settings.Default.CommunityDir))
             {
                 if (!System.IO.File.Exists(addon + "\\manifest.json"))
                     continue;
 
-                string manifest = await System.IO.File.ReadAllTextAsync(addon + "\\manifest.json");
-                var pkg = System.Text.Json.JsonSerializer.Deserialize<Models.NonApi.InstalledAddon>(manifest, Services.HelperService.SerializerOptions);
-                pkg.Filename = new System.IO.DirectoryInfo(addon).Name;
+                try
+                {
+                    string manifest = await System.IO.File.ReadAllTextAsync(addon + "\\manifest.json");
+                    var pkg = System.Text.Json.JsonSerializer.Deserialize<Models.NonApi.InstalledAddon>(manifest, Services.HelperService.SerializerOptions);
+                    pkg.Filename = new System.IO.DirectoryInfo(addon).Name;
 
-                packageList.Add(pkg.Filename);
+                    packageList.Add(pkg.Filename);
 
-                foreach (var res in ResourceList)
-                    if (res.Filename == pkg.Filename)
-                    {
-                        res.InstalledPackage = pkg;
-                        break;
-                    }
+                    foreach (var res in ResourceList)
+                        if (res.Filename == pkg.Filename)
+                        {
+                            res.InstalledPackage = pkg;
+                            break;
+                        }
+                }
+                catch { } // Ignore
             }
 
+            // Resolve dependencies
             foreach (var res in ResourceList)
             {
                 if (res.Dependencies == null)
@@ -85,7 +112,7 @@ namespace BushDiversTracker
 
                 foreach (var dep in res.Dependencies)
                 {
-                    if (!packageList.Contains(dep.Filename))
+                    if (!packageList.Contains(dep.Filename) && !OfficialPackageList.Contains(dep.Filename))
                     {
                         dep.Found = false;
 

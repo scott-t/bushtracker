@@ -10,6 +10,8 @@ namespace BushDiversTracker.Services
 {
     class HelperService
     {
+        protected static string BasePath { get; set; }
+
         /// <summary>
         /// Convert to/from string and Version class
         /// </summary>
@@ -188,11 +190,57 @@ namespace BushDiversTracker.Services
         {
             string path = Properties.Settings.Default.CommunityDir;
 
-            if (File.Exists(path))
+            if (Directory.Exists(path))
                 return path;
 
+            path = GetBasePath() + "\\Community";
+
+            if (!Directory.Exists(path))
+                return null; // Give up
+
+            Properties.Settings.Default.CommunityDir = path;
+            Properties.Settings.Default.Save();
+
+            return path;
+        }
+
+        /// <summary>
+        /// Find the local official package path
+        /// </summary>
+        /// <returns></returns>
+        public static string GetOfficialPath()
+        {
+            string path = GetBasePath() + "\\Official";
+
+            if (Directory.Exists(path + "\\Steam"))
+            {
+                path += "\\Steam";
+            }
+            else if (Directory.Exists(path + "\\OneStore"))
+            {
+                path += "\\OneStore";
+            }
+            else
+            {
+                var dirs = Directory.GetDirectories(path);
+                if (dirs.Length == 1)
+                    path = dirs[0];
+            }
+
+            return path;
+        }
+
+        /// <summary>
+        /// Find the base FS package path
+        /// </summary>
+        /// <returns></returns>
+        public static string GetBasePath()
+        {
+            if (BasePath?.Length > 0 && Directory.Exists(BasePath))
+                return BasePath;
+
             // Go searching
-            path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Microsoft Flight Simulator\\UserCfg.opt";
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Microsoft Flight Simulator\\UserCfg.opt";
             if (!File.Exists(path))
             {
                 path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Packages\\Microsoft.FlightSimulator_8wekyb3d8bbwe\\LocalCache\\UserCfg.opt";
@@ -208,15 +256,13 @@ namespace BushDiversTracker.Services
             if (path.Length == 0)
                 return null;
 
-            path = path[23..^1] + "\\Community";
+            path = path[23..^1];
             if (!Directory.Exists(path))
-                return null; // Give up
+                return null;
 
-            Properties.Settings.Default.CommunityDir = path;
-            Properties.Settings.Default.Save();
+            BasePath = path;
 
-            return path;
+            return BasePath;
         }
-
     }
 }
