@@ -552,10 +552,10 @@ namespace BushDiversTracker
                         lblEnd.Visibility = Visibility.Hidden;
                     } else
                     {
-                        MessageBox.Show("You must be on the ground with engines off to end your flight", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Warning);
                         bEndFlight = false;
                         btnEndFlight.IsEnabled = true;
                         lblEnd.Visibility = Visibility.Hidden;
+                        MessageBox.Show("You must be on the ground with engines off to end your flight", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                 }
 
@@ -567,8 +567,8 @@ namespace BushDiversTracker
                     if (d > 50)
                     {
                         bFlightTracking = false;
-                        MessageBox.Show("It looks like you have abandoned your flight, tracking will now stop and your progress cancelled." + "\n" + "You can start your flight again by returning to the departure location", "Bush Divers", MessageBoxButton.OK);
                         StopTracking();
+                        MessageBox.Show("It looks like you have abandoned your flight, tracking will now stop and your progress cancelled." + "\n" + "You can start your flight again by returning to the departure location", "Bush Divers", MessageBoxButton.OK);
                         return;
                     }
                     currentDistance += d;
