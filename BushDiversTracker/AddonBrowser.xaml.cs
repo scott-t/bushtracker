@@ -21,6 +21,10 @@ namespace BushDiversTracker
         public AddonBrowser()
         {
             InitializeComponent();
+
+            // Init state
+            UpdateInstallButton();
+            btnUpdate.IsEnabled = false;
             txtPath.Text = Services.HelperService.GetPackagePath() ?? "Not set";
             _api = new Services.APIService();
         }
@@ -133,6 +137,8 @@ namespace BushDiversTracker
                     res.DependencyInfo = Models.Enums.AddonDependencyStatus.MissingMandatory;
             }
 
+            btnUpdate.IsEnabled = ResourceList.Any(res => res.Install && res.NewVer);
+
             UpdateInstallButton();
         }
 
@@ -146,16 +152,11 @@ namespace BushDiversTracker
             dlProgress.Visibility = Visibility.Hidden;
 
             var res = await _api.GetAddonResources();
-            bool updateAvail = false;
             foreach (var r in res)
             {
                 r.Filename = r.Filename.ToLower();
-                if (r.Install && r.NewVer)
-                    updateAvail = true;
-
                 ResourceList.Add(r);
             }
-            btnUpdate.IsEnabled = updateAvail;
             lstAddons.SelectedIndex = 0;
             RescanAddons();
         }
@@ -167,15 +168,22 @@ namespace BushDiversTracker
 
         private void UpdateInstallButton()
         {
-            btnInstall.IsEnabled = lstAddons.SelectedItem != null;
             var item = (Models.AddonResource)lstAddons.SelectedItem;
-            btnInstall.Visibility = !item.Install || item.NewVer ? Visibility.Visible : Visibility.Hidden;
-            if (item.NewVer)
-                btnInstall.Content = "Update";
+            if (item == null)
+            {
+                btnInstall.Visibility = Visibility.Hidden;
+                btnRemove.Visibility = Visibility.Hidden;
+            }
             else
-                btnInstall.Content = "Install";
+            {
+                btnInstall.Visibility = !item.Install || item.NewVer ? Visibility.Visible : Visibility.Hidden;
+                if (item.NewVer)
+                    btnInstall.Content = "Update";
+                else
+                    btnInstall.Content = "Install";
 
-            btnRemove.Visibility = item.Install ? Visibility.Visible : Visibility.Hidden;
+                btnRemove.Visibility = item.Install ? Visibility.Visible : Visibility.Hidden;
+            }
         }
 
 
@@ -256,9 +264,19 @@ namespace BushDiversTracker
                 dlProgress.Value = 0;
                 dlProgress.Visibility = Visibility.Visible;
                 await client.DownloadFileTaskAsync(item.Url, tmpFile);
-                
-                if (System.IO.Directory.Exists(Properties.Settings.Default.CommunityDir + "\\" + item.Filename))
-                    System.IO.Directory.Delete(Properties.Settings.Default.CommunityDir + "\\" + item.Filename, true);
+
+                try
+                {
+                    if (System.IO.Directory.Exists(Properties.Settings.Default.CommunityDir + "\\" + item.Filename))
+                    {
+                        // Could just delete the directory but might upset if the addon is 'linked' via a linker
+                        foreach (var file in System.IO.Directory.EnumerateDirectories(Properties.Settings.Default.CommunityDir + "\\" + item.Filename))
+                            System.IO.Directory.Delete(file, true);
+                        foreach (var file in System.IO.Directory.EnumerateFiles(Properties.Settings.Default.CommunityDir + "\\" + item.Filename))
+                            System.IO.File.Delete(file);
+                    }
+                }
+                catch { } // Ignore
 
                 dlProgress.IsIndeterminate = true;
                 await Task.Run(() => System.IO.Compression.ZipFile.ExtractToDirectory(tmpFile, Properties.Settings.Default.CommunityDir, true));
