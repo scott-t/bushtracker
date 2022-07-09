@@ -64,7 +64,7 @@ namespace BushDiversTracker
                     // Don't need to parse json (yet), just assume a dir with a manifest is an addon
                     try
                     {
-                        OfficialPackageList.Add(new System.IO.DirectoryInfo(addon).Name);
+                        OfficialPackageList.Add(new System.IO.DirectoryInfo(addon).Name.ToLower());
                     }
                     catch { } // Ignore
                 }
@@ -84,7 +84,7 @@ namespace BushDiversTracker
                 {
                     string manifest = await System.IO.File.ReadAllTextAsync(addon + "\\manifest.json");
                     var pkg = System.Text.Json.JsonSerializer.Deserialize<Models.NonApi.InstalledAddon>(manifest, Services.HelperService.SerializerOptions);
-                    pkg.Filename = new System.IO.DirectoryInfo(addon).Name;
+                    pkg.Filename = new System.IO.DirectoryInfo(addon).Name.ToLower();
 
                     packageList.Add(pkg.Filename);
 
@@ -146,9 +146,16 @@ namespace BushDiversTracker
             dlProgress.Visibility = Visibility.Hidden;
 
             var res = await _api.GetAddonResources();
+            bool updateAvail = false;
             foreach (var r in res)
-                ResourceList.Add(r);
+            {
+                r.Filename = r.Filename.ToLower();
+                if (r.Install && r.NewVer)
+                    updateAvail = true;
 
+                ResourceList.Add(r);
+            }
+            btnUpdate.IsEnabled = updateAvail;
             lstAddons.SelectedIndex = 0;
             RescanAddons();
         }
