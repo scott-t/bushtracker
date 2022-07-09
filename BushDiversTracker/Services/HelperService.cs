@@ -28,7 +28,7 @@ namespace BushDiversTracker.Services
 
                 if (ver.Contains('-'))
                 {
-                    ver = ver.Substring(0, ver.IndexOf('-'));
+                    ver = ver[..ver.IndexOf('-')];
                     try
                     {
                         return new Version(ver);
@@ -42,12 +42,41 @@ namespace BushDiversTracker.Services
                 writer.WriteStringValue(value.ToString());
             }
         }
+        internal class StringBoolJsonConverter : System.Text.Json.Serialization.JsonConverter<Boolean>
+        {
+            public override bool Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                switch (reader.TokenType)
+                {
+                    case JsonTokenType.String:
+                        var tok = reader.GetString().ToLower();
+                        if (tok == "false" || tok == "0")
+                            return false;
+                        return true;
+
+                    case JsonTokenType.Number:
+                        return reader.GetInt32() != 0;
+
+                    case JsonTokenType.True:
+                    case JsonTokenType.False:
+                        return reader.GetBoolean();
+
+                    default:
+                        throw new NotSupportedException();
+                }
+            }
+            public override void Write(Utf8JsonWriter writer, bool value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(Convert.ToString(value));
+            }
+        }
 
         public static readonly JsonSerializerOptions SerializerOptions = new()
         {
             Converters =
             {
-                new VersionJsonConverter()
+                new VersionJsonConverter(),
+                new StringBoolJsonConverter()
             }
         };
 

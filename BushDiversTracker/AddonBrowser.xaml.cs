@@ -137,7 +137,7 @@ namespace BushDiversTracker
                     res.DependencyInfo = Models.Enums.AddonDependencyStatus.MissingMandatory;
             }
 
-            btnUpdate.IsEnabled = ResourceList.Any(res => res.Install && res.NewVer);
+            btnUpdate.IsEnabled = ResourceList.Any(res => res.Install && res.NewVer) && Properties.Settings.Default.CommunityDir.Length > 0;
 
             UpdateInstallButton();
         }
@@ -151,14 +151,22 @@ namespace BushDiversTracker
         {
             dlProgress.Visibility = Visibility.Hidden;
 
-            var res = await _api.GetAddonResources();
-            foreach (var r in res)
+            try
             {
-                r.Filename = r.Filename.ToLower();
-                ResourceList.Add(r);
+                var res = await _api.GetAddonResources();
+                foreach (var r in res)
+                {
+                    r.Filename = r.Filename.ToLower();
+                    ResourceList.Add(r);
+                }
+                lstAddons.SelectedIndex = 0;
+
+                RescanAddons();
             }
-            lstAddons.SelectedIndex = 0;
-            RescanAddons();
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error reading addon list.\n\n" + ex.Message, "Error");
+            }
         }
 
         private void AddonList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -169,7 +177,7 @@ namespace BushDiversTracker
         private void UpdateInstallButton()
         {
             var item = (Models.AddonResource)lstAddons.SelectedItem;
-            if (item == null)
+            if (item == null || Properties.Settings.Default.CommunityDir.Length == 0)
             {
                 btnInstall.Visibility = Visibility.Hidden;
                 btnRemove.Visibility = Visibility.Hidden;
@@ -192,6 +200,8 @@ namespace BushDiversTracker
             foreach (var item in ResourceList)
                 if (item.Install && item.Version > item.InstalledPackage.Version)
                     await DownloadFile(item);
+
+            RescanAddons();
         }
 
         async private void btnInstall_Click(object sender, RoutedEventArgs e)

@@ -62,12 +62,14 @@
                                                 <Condition Binding="{Binding Install}" Value="True"/>
                                             </MultiDataTrigger.Conditions>
 
+                                            <Setter Property="ToolTip" Value="Required dependencies missing"/>
                                             <Setter Property="Text" Value="❗"/>
                                             <Setter Property="Foreground" Value="Red"/>
                                             <Setter Property="FontWeight" Value="Bold"/>
                                         </MultiDataTrigger>
                                         <DataTrigger Binding="{Binding DependencyInfo}" Value="{x:Static ds:AddonDependencyStatus.MissingOptional}">
-                                            <Setter Property="Text" Value="❓"/>
+                                            <Setter Property="ToolTip" Value="Optional dependencies available"/>
+                                            <Setter Property="Text" Value="❗"/>
                                             <Setter Property="Foreground" Value="Blue"/>
                                             <Setter Property="FontWeight" Value="Bold"/>
                                         </DataTrigger>
@@ -137,6 +139,7 @@
                                             <Style.Setters>
                                                 <Setter Property="Text" Value="✔️"/>
                                                 <Setter Property="Foreground" Value="DarkGreen"/>
+                                                <Setter Property="ToolTip" Value="Installed"/>
                                             </Style.Setters>
                                             <Style.Triggers>
                                                 <MultiDataTrigger>
@@ -145,6 +148,7 @@
                                                         <Condition Binding="{Binding Mandatory}" Value="True"/>
                                                     </MultiDataTrigger.Conditions>
                                                     <MultiDataTrigger.Setters>
+                                                        <Setter Property="ToolTip" Value="Required dependency missing"/>
                                                         <Setter Property="Text" Value="❗"/>
                                                         <Setter Property="Foreground" Value="Red"/>
                                                     </MultiDataTrigger.Setters>
@@ -155,7 +159,8 @@
                                                         <Condition Binding="{Binding Mandatory}" Value="False"/>
                                                     </MultiDataTrigger.Conditions>
                                                     <MultiDataTrigger.Setters>
-                                                        <Setter Property="Text" Value="❓"/>
+                                                        <Setter Property="ToolTip" Value="Optional dependency"/>
+                                                        <Setter Property="Text" Value="❗"/>
                                                         <Setter Property="Foreground" Value="Blue"/>
                                                     </MultiDataTrigger.Setters>
                                                 </MultiDataTrigger>
