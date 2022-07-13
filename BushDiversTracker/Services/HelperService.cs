@@ -3,12 +3,83 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BushDiversTracker.Services
 {
     class HelperService
     {
+        protected static string BasePath { get; set; }
+
+        /// <summary>
+        /// Convert to/from string and Version class
+        /// </summary>
+        internal class VersionJsonConverter : System.Text.Json.Serialization.JsonConverter<Version>
+        {
+            public override Version Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                string ver = reader.GetString();
+                try 
+                {
+                    return new Version(ver);
+                }
+                catch { }
+
+                if (ver.Contains('-'))
+                {
+                    ver = ver[..ver.IndexOf('-')];
+                    try
+                    {
+                        return new Version(ver);
+                    }
+                    catch { }
+                }
+                return new Version();
+            }
+            public override void Write(Utf8JsonWriter writer, Version value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(value.ToString());
+            }
+        }
+        internal class StringBoolJsonConverter : System.Text.Json.Serialization.JsonConverter<Boolean>
+        {
+            public override bool Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                switch (reader.TokenType)
+                {
+                    case JsonTokenType.String:
+                        var tok = reader.GetString().ToLower();
+                        if (tok == "false" || tok == "0")
+                            return false;
+                        return true;
+
+                    case JsonTokenType.Number:
+                        return reader.GetInt32() != 0;
+
+                    case JsonTokenType.True:
+                    case JsonTokenType.False:
+                        return reader.GetBoolean();
+
+                    default:
+                        throw new NotSupportedException();
+                }
+            }
+            public override void Write(Utf8JsonWriter writer, bool value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(Convert.ToString(value));
+            }
+        }
+
+        public static readonly JsonSerializerOptions SerializerOptions = new()
+        {
+            Converters =
+            {
+                new VersionJsonConverter(),
+                new StringBoolJsonConverter()
+            }
+        };
+
         /// <summary>
         /// Calculates the distance between two points
         /// </summary>
@@ -120,14 +191,107 @@ namespace BushDiversTracker.Services
             await _api.CancelTrackingAsync();
         }
 
+        /// <summary>
+        /// Convert gallons to litres
+        /// </summary>
+        /// <param name="gal">Gallons</param>
+        /// <returns>Litres</returns>
         public static decimal GalToLitre(decimal gal)
         {
             return gal * new decimal(3.785412);
         }
 
+        /// <summary>
+        /// Convert pounds to kilograms
+        /// </summary>
+        /// <param name="lbs">Pounds</param>
+        /// <returns>Kilograms</returns>
         public static decimal LbsToKG(decimal lbs)
         {
             return lbs * new decimal(0.453592);
+        }
+
+        /// <summary>
+        /// Find the local community package path
+        /// </summary>
+        /// <returns></returns>
+        public static string GetPackagePath()
+        {
+            string path = Properties.Settings.Default.CommunityDir;
+
+            if (Directory.Exists(path))
+                return path;
+
+            path = GetBasePath() + "\\Community";
+
+            if (!Directory.Exists(path))
+                return null; // Give up
+
+            Properties.Settings.Default.CommunityDir = path;
+            Properties.Settings.Default.Save();
+
+            return path;
+        }
+
+        /// <summary>
+        /// Find the local official package path
+        /// </summary>
+        /// <returns></returns>
+        public static string GetOfficialPath()
+        {
+            string path = GetBasePath() + "\\Official";
+
+            if (Directory.Exists(path + "\\Steam"))
+            {
+                path += "\\Steam";
+            }
+            else if (Directory.Exists(path + "\\OneStore"))
+            {
+                path += "\\OneStore";
+            }
+            else
+            {
+                var dirs = Directory.GetDirectories(path);
+                if (dirs.Length == 1)
+                    path = dirs[0];
+            }
+
+            return path;
+        }
+
+        /// <summary>
+        /// Find the base FS package path
+        /// </summary>
+        /// <returns></returns>
+        public static string GetBasePath()
+        {
+            if (BasePath?.Length > 0 && Directory.Exists(BasePath))
+                return BasePath;
+
+            // Go searching
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Microsoft Flight Simulator\\UserCfg.opt";
+            if (!File.Exists(path))
+            {
+                path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Packages\\Microsoft.FlightSimulator_8wekyb3d8bbwe\\LocalCache\\UserCfg.opt";
+                if (!File.Exists(path))
+                    return null; // Couldn't find on Steam or Store
+            }
+
+            var lines = File.ReadAllLines(path);
+            if (lines.Length == 0)
+                return null;
+
+            path = lines.FirstOrDefault(line => line.StartsWith("InstalledPackagesPath "));
+            if (path.Length == 0)
+                return null;
+
+            path = path[23..^1];
+            if (!Directory.Exists(path))
+                return null;
+
+            BasePath = path;
+
+            return BasePath;
         }
     }
 }
