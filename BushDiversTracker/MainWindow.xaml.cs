@@ -55,7 +55,7 @@ namespace BushDiversTracker
             _api = new APIService();
             if (!System.Diagnostics.Debugger.IsAttached)
             {
-                AutoUpdater.Start("https://bushdivers-resource.s3.amazonaws.com/bush-tracker/bushtracker-info.xml");
+                AutoUpdater.Start("https://storage.googleapis.com/bush-divers-platform.appspot.com/bushtracker-info.xml");
             }
             var version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             lblVersion.Content = version;
