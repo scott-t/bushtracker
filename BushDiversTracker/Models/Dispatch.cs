@@ -37,5 +37,7 @@ namespace BushDiversTracker.Models
         public string Id { get; set; }
         [JsonPropertyName("is_empty")]
         public int IsEmpty { get; set; }
+        [JsonPropertyName("tour")]
+        public string? Tour { get; set; }
     }
 }

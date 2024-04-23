@@ -13,6 +13,8 @@ namespace BushDiversTracker.Models
         public string ContractType { get; set; }
         [JsonPropertyName("current_airport_id")]
         public string CurrentAirport { get; set; }
+        [JsonPropertyName("arr_airport_id")]
+        public string DestinationAirport { get; set; }
         [JsonPropertyName("cargo")]
         public string Cargo { get; set; }
         [JsonPropertyName("cargo_qty")]

@@ -55,7 +55,7 @@ namespace BushDiversTracker
             _api = new APIService();
             if (!System.Diagnostics.Debugger.IsAttached)
             {
-                AutoUpdater.Start("https://storage.googleapis.com/bush-divers-platform.appspot.com/bushtracker-info.xml");
+                AutoUpdater.Start("https://bushdivers-resource.s3.amazonaws.com/bush-tracker/bushtracker-info.xml");
             }
             var version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             lblVersion.Content = version;
@@ -81,6 +81,7 @@ namespace BushDiversTracker
         private bool bReady = false;
         private bool bEnginesRunning = false;
         private bool bFlightCompleted = false;
+        private bool fuelErrorShown = false;
         private bool bFirstData = true;
         private bool bLastEngineStatus;
         private double startLat;
@@ -108,6 +109,7 @@ namespace BushDiversTracker
         protected double lastGforce;
         protected bool lastOnground;
         protected DateTime dataLastSent;
+        protected string aircraftName;
 
         // sim connect setup variables
         SimConnect simConnect = null;
@@ -163,6 +165,10 @@ namespace BushDiversTracker
             public int eng2_rpm;
             public int eng3_rpm;
             public int eng4_rpm;
+            public int eng1_combustion;
+            public int eng2_combustion;
+            public int eng3_combustion;
+            public int eng4_combustion;
             public double aircraft_max_rpm;
             public double max_rpm_attained;
             public int zulu_time;
@@ -272,6 +278,10 @@ namespace BushDiversTracker
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:2", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:3", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:4", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ENG COMBUSTION:1", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ENG COMBUSTION:2", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ENG COMBUSTION:3", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ENG COMBUSTION:4", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "MAX RATED ENGINE RPM", "Rpm", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG MAX REACHED RPM", "Rpm", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ZULU TIME", "seconds", SIMCONNECT_DATATYPE.INT32, 1E+09f, SimConnect.SIMCONNECT_UNUSED);
@@ -387,10 +397,21 @@ namespace BushDiversTracker
             {
                 Struct1 data1 = (Struct1)data.dwData[0];
                 // engine status
-                bEnginesRunning = data1.eng1_rpm > 0 || data1.eng2_rpm > 0 || data1.eng3_rpm > 0 || data1.eng4_rpm > 0;
+                bEnginesRunning = data1.eng1_combustion > 0 || data1.eng2_combustion > 0 || data1.eng3_combustion > 0 || data1.eng4_combustion > 0;
 
                 if (!bFlightTracking)
-                    return;
+                {
+                    if (dispatchData == null)
+                    {
+                        return;
+                    }
+                    if (!bEnginesRunning)
+                    {
+                        return;
+                    }
+                    
+                }
+                    
 
                 // set reg number
                 // simConnect.SetDataOnSimObject(SET_DATA.ATC_ID, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, txtRegistration.Text);
@@ -542,7 +563,7 @@ namespace BushDiversTracker
                         endLon = data1.longitude;
                         // endTime = HelperService.SetZuluTime(data1.zulu_time).ToString("yyyy-MM-dd HH:mm:ss");
                         endTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-
+                        aircraftName = data1.title;
                         // btnStop.Visibility = Visibility.Visible;
                         btnSubmit.IsEnabled = true;
 
@@ -691,6 +712,19 @@ namespace BushDiversTracker
             }
         }
 
+        public void StartFlight()
+        {
+            lblStart.Visibility = Visibility.Visible;
+            btnStart.IsEnabled = false;
+            btnFetchBookings.IsEnabled = false;
+            bFlightTracking = true;
+            lblErrorText.Visibility = Visibility.Hidden;
+            timer.Stop();
+            // Might still get a double-fire if the dispatch is ready to send or even if the timer has ticked but response yet to be received - "shouldn't" be an issue
+            Timer_Tick(null, null);
+            timer.Start();
+        }
+
         /// <summary>
         /// Sends text to display on Sim - currently broken in simconnect
         /// </summary>
@@ -711,24 +745,7 @@ namespace BushDiversTracker
 
         private void btnStart_Click(object sender, RoutedEventArgs e)
         {
-            lblStart.Visibility = Visibility.Visible;
-            btnStart.IsEnabled = false;
-
-            // Todo, tidy this up
-            if (bEnginesRunning)
-            {
-                MessageBox.Show("Your engine(s) must be off before starting", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                lblStart.Visibility = Visibility.Collapsed;
-                btnStart.IsEnabled = true;
-                return;
-            }
-
-            bFlightTracking = true;
-            lblErrorText.Visibility = Visibility.Hidden;
-            timer.Stop();
-            // Might still get a double-fire if the dispatch is ready to send or even if the timer has ticked but response yet to be received - "shouldn't" be an issue
-            Timer_Tick(null, null);
-            timer.Start();
+            StartFlight();
         }
 
         private async void btnSubmit_Click(object sender, RoutedEventArgs e)
@@ -736,15 +753,20 @@ namespace BushDiversTracker
             lblSubmitting.Visibility = Visibility.Visible;
             btnSubmit.IsEnabled = false;
             lblErrorText.Visibility = Visibility.Hidden;
+            btnFetchBookings.IsEnabled = true;
             SubmitFlight();
         }
 
         private void btnStop_Click(object sender, RoutedEventArgs e)
         {
             if (MessageBox.Show("If you cancel you will need to restart your flight at a later time.\n\nAre you sure you wish to cancel your flight?", "Cancel?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-            {   
+            {
+                fuelErrorShown = false;
                 StopTracking();
                 lblErrorText.Visibility = Visibility.Hidden;
+                CloseConnection();
+                btnConnect.IsEnabled = true;
+                btnFetchBookings.IsEnabled = true;
             }
         }
 
@@ -896,7 +918,8 @@ namespace BushDiversTracker
                 TouchDownPitch = landingPitch,
                 BlockOffTime = startTime,
                 BlockOnTime = endTime,
-                Distance = currentDistance
+                Distance = currentDistance,
+                AircraftUsed = aircraftName
             };
 
             bool res = false;
@@ -1036,6 +1059,8 @@ namespace BushDiversTracker
             txtDepLon.Text = dispatch.DepLon.ToString();
             txtArrLat.Text = dispatch.ArrLat.ToString();
             txtArrLon.Text = dispatch.ArrLon.ToString();
+            string tourText  = dispatch.Tour != null ? dispatch.Tour.ToString() : "";
+            txtTour.Text = tourText;
             UpdateDispatchWeight();
             grpFlight.Visibility = Visibility.Visible;
         }
@@ -1099,6 +1124,11 @@ namespace BushDiversTracker
             if (!(minVal <= data.Fuel) || !(data.Fuel <= maxVal))
             {
                 // set error text for fuel
+                if (!fuelErrorShown)
+                {
+                    fuelErrorShown = true;
+                    MessageBox.Show("Your fuel in sim does not match the dispatch", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                }
                 lblFuelError.Content = "Fuel does not match";
                 lblFuelError.Visibility = Visibility.Visible;
                 status = false;
@@ -1142,6 +1172,7 @@ namespace BushDiversTracker
         /// </summary>
         public async void FetchDispatch()
         {
+            fuelErrorShown = false;
             lblStatusText.Text = "Ok";
             lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
             lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
