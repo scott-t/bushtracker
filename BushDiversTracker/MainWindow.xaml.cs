@@ -399,6 +399,8 @@ namespace BushDiversTracker
                 // engine status
                 bEnginesRunning = data1.eng1_combustion > 0 || data1.eng2_combustion > 0 || data1.eng3_combustion > 0 || data1.eng4_combustion > 0;
 
+                //if (!bFlightTracking)
+                //  return;
                 if (!bFlightTracking)
                 {
                     if (dispatchData == null)
@@ -409,9 +411,8 @@ namespace BushDiversTracker
                     {
                         return;
                     }
-                    
+
                 }
-                    
 
                 // set reg number
                 // simConnect.SetDataOnSimObject(SET_DATA.ATC_ID, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, txtRegistration.Text);
@@ -452,7 +453,7 @@ namespace BushDiversTracker
                         lblStatusText.Text = "Ready to Start";
                         lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#16A34A"));
                         lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BBF7D0"));
-
+                        StartFlight();
                         // Clear landing rate so next change event as per simconnect is viewed as 'new'
                         landingRate = 0.0;
                     } else
