@@ -485,6 +485,7 @@ namespace BushDiversTracker
                     startTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
                     startFuelQty = data1.fuel_qty;
                     flightStatus = PirepStatusType.BOARDING;
+                    _api.PostPirepStatusAsync(new PirepStatus { PirepId = txtPirep.Text, Status = (int)PirepStatusType.BOARDING });
                     lblStatusText.Text = "Pre-flight|Loading";
                     SendTextToSim("Bush Tracker Status: Pre-Flight - Ready");
                     lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
@@ -495,6 +496,7 @@ namespace BushDiversTracker
                 if (flightStatus == PirepStatusType.BOARDING && !Convert.ToBoolean(data1.on_ground) && data1.plane_altitude > 20) // arbitrary number to avoid advancing state on bouncy water takeoff
                 {
                     flightStatus = PirepStatusType.DEPARTED;
+                    _api.PostPirepStatusAsync(new PirepStatus { PirepId = txtPirep.Text, Status = (int)PirepStatusType.DEPARTED });
                     lblStatusText.Text = "Departed";
                     lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
                     lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
@@ -503,7 +505,7 @@ namespace BushDiversTracker
                 }
 
                 // check for landed
-                if (flightStatus == PirepStatusType.DEPARTED || flightStatus == PirepStatusType.APPROACH)
+                if (flightStatus == PirepStatusType.DEPARTED || flightStatus == PirepStatusType.LANDED)
                 {
                     // Increase resolution in case of water ditch
                     if (data1.plane_altitude < 500 && timer.Interval.Seconds > 2)
@@ -516,9 +518,10 @@ namespace BushDiversTracker
                     {
                         // And we either slowing for land
                         // 25knt arbitrary number to avoid advancing state on bouncy water takeoff)
-                        if (data1.airspeed_indicated < 25 && flightStatus != PirepStatusType.APPROACH)
+                        if (data1.airspeed_indicated < 25 && flightStatus != PirepStatusType.LANDED)
                         {
-                            flightStatus = PirepStatusType.APPROACH;
+                            flightStatus = PirepStatusType.LANDED;
+                            _api.PostPirepStatusAsync(new PirepStatus { PirepId = txtPirep.Text, Status = (int)PirepStatusType.LANDED });
                             lblStatusText.Text = "Landed";
                             lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
                             lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
@@ -554,6 +557,7 @@ namespace BushDiversTracker
                         bFlightCompleted = true;
                         bFlightTracking = false;
                         flightStatus = PirepStatusType.ARRIVED;
+                        _api.PostPirepStatusAsync(new PirepStatus { PirepId = txtPirep.Text, Status = (int)PirepStatusType.ARRIVED });
                         lblStatusText.Text = "Flight ended";
                         lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#16A34A"));
                         lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BBF7D0"));

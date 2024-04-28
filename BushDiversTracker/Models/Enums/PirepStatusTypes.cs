@@ -8,10 +8,11 @@ namespace BushDiversTracker.Models.Enums
 {
     enum PirepStatusType
     {
+        PREFLIGHT = 0,
         BOARDING = 1,
         DEPARTED = 2,
         CRUISE = 3,
-        APPROACH = 4,
+        LANDED = 4,
         ARRIVED = 5
     }
 }

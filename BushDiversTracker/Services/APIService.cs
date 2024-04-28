@@ -14,8 +14,8 @@ namespace BushDiversTracker.Services
 {
     class APIService
     {
-        protected string baseUrl = "https://fly.bushdivers.com/api";
-        // protected string baseUrl = "http://localhost:8000/api";
+        // protected string baseUrl = "https://fly.bushdivers.com/api";
+        protected string baseUrl = "http://localhost:8000/api";
         HttpClient _http = new HttpClient();
 
         public APIService()
@@ -168,17 +168,9 @@ namespace BushDiversTracker.Services
         /// </summary>
         /// <param name="pirepStatus">Status to send</param>
         /// <returns>true if successful</returns>
-        public async Task<bool> PostPirepStatusAsync(PirepStatus pirepStatus)
+        public async Task PostPirepStatusAsync(PirepStatus pirepStatus)
         {
-            HttpResponseMessage res = await _http.PostAsJsonAsync($"{baseUrl}/pirep/status", pirepStatus);
-            if (res.StatusCode == HttpStatusCode.OK)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            await _http.PostAsJsonAsync($"{baseUrl}/pirep/status", pirepStatus);
         }
 
         public async Task<ICollection<AddonResource>> GetAddonResources()
