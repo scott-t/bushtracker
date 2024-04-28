@@ -59,13 +59,15 @@
                 <Label x:Name="lblDepartureError" Content="Incorrect location" Padding="1" HorizontalAlignment="Left" Margin="19,26,0,0" VerticalAlignment="Top" Foreground="#FFF00808" Grid.ColumnSpan="2" Width="175"/>
                 <Label x:Name="lblCargoError" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="19,91,0,0" VerticalAlignment="Top" Foreground="#FFF00808"/>
                 <Label x:Name="lblAircraftError" Foreground="#FFF00808" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="159,68,0,0" VerticalAlignment="Top" Grid.Column="1"/>
-                <Label x:Name="lblFuelError" Foreground="#FFF00808" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="159,96,0,0" VerticalAlignment="Top" Grid.Column="1"/>
+                <Label x:Name="lblFuelError" Foreground="#FFF00808" Content="Label" Padding="1" HorizontalAlignment="Left" Margin="159,116,0,0" VerticalAlignment="Top" Grid.Column="1"/>
                 <Label x:Name="lblAircraftType" Content="Type:" HorizontalAlignment="Left" Margin="152,24,0,0" Height="29" VerticalAlignment="Top" Grid.Column="1"/>
                 <TextBlock x:Name="txtAircraftType" Margin="238,31,0,0" Text="Test" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="235" Grid.Column="1"/>
                 <Label x:Name="lblPayloadTotal" Content="Total Payload:" HorizontalAlignment="Left" Margin="14,127,0,0" Height="29" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
                 <TextBlock x:Name="txtPayloadTotal" Margin="56,133,0,0" Text="Test" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="92" Grid.Column="1"/>
-                <Label x:Name="lblTour" Content="Tour:" HorizontalAlignment="Left" Margin="153,115,0,0" Height="29" VerticalAlignment="Top" Grid.Column="1"/>
-                <TextBlock x:Name="txtTour" Margin="238,120,0,0" Text="Test" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="235" Grid.Column="1"/>
+                <Label x:Name="lblTour" Content="Tour:" HorizontalAlignment="Left" Margin="153,130,0,0" Height="29" VerticalAlignment="Top" Grid.Column="1"/>
+                <TextBlock x:Name="txtTour" Margin="238,135,0,0" Text="Test" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="235" Grid.Column="1"/>
+                <Label x:Name="lblSimFuel" FontStyle="Italic" FontSize="10" Content="Sim Fuel:" HorizontalAlignment="Left" Margin="153,94,0,0" Height="29" VerticalAlignment="Top" Grid.Column="1"/>
+                <TextBlock x:Name="txtSimFuel" FontStyle="Italic" FontSize="10" Margin="237,99,0,0" Text="N/A" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Left" Width="235" Grid.Column="1"/>
             </Grid>
         </GroupBox>
         <Ellipse x:Name="elConnection" Height="10" Margin="732,10,0,0" Stroke="Red" Fill="Red" VerticalAlignment="Top" RenderTransformOrigin="-0.3,-1.596" HorizontalAlignment="Left" Width="10"/>

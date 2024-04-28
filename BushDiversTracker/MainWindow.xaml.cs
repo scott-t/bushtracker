@@ -398,7 +398,7 @@ namespace BushDiversTracker
                 Struct1 data1 = (Struct1)data.dwData[0];
                 // engine status
                 bEnginesRunning = data1.eng1_combustion > 0 || data1.eng2_combustion > 0 || data1.eng3_combustion > 0 || data1.eng4_combustion > 0;
-
+                txtSimFuel.Text = data1.fuel_qty.ToString("0.## gal");
                 //if (!bFlightTracking)
                 //  return;
                 if (!bFlightTracking)
