@@ -14,8 +14,8 @@ namespace BushDiversTracker.Services
 {
     class APIService
     {
-        // protected string baseUrl = "https://fly.bushdivers.com/api";
-        protected string baseUrl = "http://localhost:8000/api";
+        protected string baseUrl = "https://fly.bushdivers.com/api";
+        // protected string baseUrl = "http://localhost:8000/api";
         HttpClient _http = new HttpClient();
 
         public APIService()
