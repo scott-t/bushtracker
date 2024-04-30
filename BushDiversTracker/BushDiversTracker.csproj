@@ -9,9 +9,9 @@
     <Product>Bush Tracker</Product>
     <Authors>Bush Divers</Authors>
     <StartupObject></StartupObject>
-    <Version>1.0.5.1</Version>
-    <AssemblyVersion>1.0.5.1</AssemblyVersion>
-    <FileVersion>1.0.5.1</FileVersion>
+    <Version>1.0.6.0</Version>
+    <AssemblyVersion>1.0.6.0</AssemblyVersion>
+    <FileVersion>1.0.6.0</FileVersion>
     <UseWindowsForms>True</UseWindowsForms>
   </PropertyGroup>
 
