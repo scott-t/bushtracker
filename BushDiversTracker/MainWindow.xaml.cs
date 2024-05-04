@@ -53,10 +53,10 @@ namespace BushDiversTracker
 
             txtKey.Password = Properties.Settings.Default.Key;
             _api = new APIService();
-            if (!System.Diagnostics.Debugger.IsAttached)
-            {
-                AutoUpdater.Start("https://bushdivers-resource.s3.amazonaws.com/bush-tracker/bushtracker-info.xml");
-            }
+            //if (!System.Diagnostics.Debugger.IsAttached)
+            //{
+              //  AutoUpdater.Start("https://bushdivers-resource.s3.amazonaws.com/bush-tracker/bushtracker-info.xml");
+            //}
             var version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             lblVersion.Content = version;
 
