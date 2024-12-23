@@ -31,5 +31,7 @@ namespace BushDiversTracker.Models
         public double Distance { get; set; }
         [JsonPropertyName("aircraft_used")]
         public string AircraftUsed { get; set; }
+        [JsonPropertyName("sim_used")]
+        public string SimUsed { get; set; }
     }
 }

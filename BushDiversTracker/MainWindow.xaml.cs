@@ -24,6 +24,13 @@ namespace BushDiversTracker
         APIService _api;
         AddonBrowser _addonBrowser;
 
+        private enum MessageState
+        {
+            OK,
+            Neutral,
+            Error
+        }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -53,10 +60,10 @@ namespace BushDiversTracker
 
             txtKey.Password = Properties.Settings.Default.Key;
             _api = new APIService();
-            //if (!System.Diagnostics.Debugger.IsAttached)
-            //{
-              //  AutoUpdater.Start("https://bushdivers-resource.s3.amazonaws.com/bush-tracker/bushtracker-info.xml");
-            //}
+            if (!System.Diagnostics.Debugger.IsAttached)
+            {
+              AutoUpdater.Start("https://bushdivers-resource.s3.amazonaws.com/bush-tracker/bushtracker-info.xml");
+            }
             var version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             lblVersion.Content = version;
 
@@ -114,6 +121,7 @@ namespace BushDiversTracker
         // sim connect setup variables
         SimConnect simConnect = null;
         const int WM_USER_SIMCONNECT = 0x0402;
+        SimVersion? version = null; 
 
         enum DEFINITIONS
         {
@@ -142,6 +150,12 @@ namespace BushDiversTracker
         //    EVENT_UNPAUSED,
         //}
 
+        enum SimVersion
+        {
+            FS2020,
+            FS2024
+        }
+
         // Sim variables
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
         public struct Struct1
@@ -161,10 +175,6 @@ namespace BushDiversTracker
             public double heading_m;
             public double heading_t;
             public double gforce;
-            public int eng1_rpm;
-            public int eng2_rpm;
-            public int eng3_rpm;
-            public int eng4_rpm;
             public int eng1_combustion;
             public int eng2_combustion;
             public int eng3_combustion;
@@ -180,6 +190,8 @@ namespace BushDiversTracker
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 8)]
             public string atcType;
             public double fuel_qty;
+            public double fuelsystem_tank1_capacity;
+            public double unusable_fuel_qty;
             public int is_overspeed;
             public int is_unlimited;
             public int payload_station_count;
@@ -274,10 +286,6 @@ namespace BushDiversTracker
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PLANE HEADING DEGREES MAGNETIC", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PLANE HEADING DEGREES TRUE", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "G FORCE", "GForce", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:1", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:2", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:3", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GENERAL ENG COMBUSTION:4", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ENG COMBUSTION:1", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ENG COMBUSTION:2", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ENG COMBUSTION:3", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
@@ -291,6 +299,8 @@ namespace BushDiversTracker
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ATC ID", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "ATC TYPE", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "FUEL TOTAL QUANTITY", "Gallons", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "FUELSYSTEM TANK CAPACITY:1", "Gallons", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED); // NEW FUEL SYSTEM simvar borked in MSFS2024, use this to test
+                simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "UNUSABLE FUEL TOTAL QUANTITY", "Gallons", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "OVERSPEED WARNING", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "UNLIMITED FUEL", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "PAYLOAD STATION COUNT", "Number", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
@@ -343,6 +353,17 @@ namespace BushDiversTracker
         {
             elConnection.Fill = Brushes.Green;
             elConnection.Stroke = Brushes.Green;
+
+            if (data.szApplicationName == "KittyHawk")
+            {
+                version = SimVersion.FS2020;
+                HelperService.WriteToLog("Connected to FS2020");
+            }
+            else if (data.szApplicationName == "SunRise")
+            {
+                version = SimVersion.FS2024;
+                HelperService.WriteToLog("Connected to FS2024");
+            }
         }
 
         /// <summary>
@@ -396,7 +417,16 @@ namespace BushDiversTracker
             if (data.dwRequestID == (uint)DAT_REQUESTS.REQUEST_1)
             {
                 Struct1 data1 = (Struct1)data.dwData[0];
+
+                if (data1.fuelsystem_tank1_capacity > 0)
+                {
+                    // new fuel system treats total fuel qty excluding unusable fuel
+                    // old fuel system this var includes unusable fuel
+                    data1.fuel_qty += data1.unusable_fuel_qty;
+                }
+
                 // engine status
+
                 bEnginesRunning = data1.eng1_combustion > 0 || data1.eng2_combustion > 0 || data1.eng3_combustion > 0 || data1.eng4_combustion > 0;
                 txtSimFuel.Text = data1.fuel_qty.ToString("0.## gal");
                 //if (!bFlightTracking)
@@ -450,9 +480,7 @@ namespace BushDiversTracker
                         bReady = true;
                         btnStart.Visibility = Visibility.Collapsed;
                         btnStop.Visibility = Visibility.Visible;
-                        lblStatusText.Text = "Ready to Start";
-                        lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#16A34A"));
-                        lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BBF7D0"));
+                        SetStatusMessage("Ready to start", MessageState.OK);
                         StartFlight();
                         // Clear landing rate so next change event as per simconnect is viewed as 'new'
                         landingRate = 0.0;
@@ -486,10 +514,9 @@ namespace BushDiversTracker
                     startFuelQty = data1.fuel_qty;
                     flightStatus = PirepStatusType.BOARDING;
                     _api.PostPirepStatusAsync(new PirepStatus { PirepId = txtPirep.Text, Status = (int)PirepStatusType.BOARDING });
-                    lblStatusText.Text = "Pre-flight|Loading";
+
+                    SetStatusMessage("Pre-flight|Loading");
                     SendTextToSim("Bush Tracker Status: Pre-Flight - Ready");
-                    lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
-                    lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
                 }
 
                 // check for take off
@@ -497,10 +524,8 @@ namespace BushDiversTracker
                 {
                     flightStatus = PirepStatusType.DEPARTED;
                     _api.PostPirepStatusAsync(new PirepStatus { PirepId = txtPirep.Text, Status = (int)PirepStatusType.DEPARTED });
-                    lblStatusText.Text = "Departed";
-                    lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
-                    lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
 
+                    SetStatusMessage("Departed");
                     SendTextToSim("Bush Tracker Status: Departed - Have a good flight!");
                 }
 
@@ -522,10 +547,8 @@ namespace BushDiversTracker
                         {
                             flightStatus = PirepStatusType.LANDED;
                             _api.PostPirepStatusAsync(new PirepStatus { PirepId = txtPirep.Text, Status = (int)PirepStatusType.LANDED });
-                            lblStatusText.Text = "Landed";
-                            lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
-                            lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
                             btnEndFlight.IsEnabled = true;
+                            SetStatusMessage("Landed");
                             SendTextToSim("Bush Tracker Status: Landed");
                         }
                         else if (!lastOnground && data1.surface_type == 2) // landed on water
@@ -558,9 +581,7 @@ namespace BushDiversTracker
                         bFlightTracking = false;
                         flightStatus = PirepStatusType.ARRIVED;
                         _api.PostPirepStatusAsync(new PirepStatus { PirepId = txtPirep.Text, Status = (int)PirepStatusType.ARRIVED });
-                        lblStatusText.Text = "Flight ended";
-                        lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#16A34A"));
-                        lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BBF7D0"));
+                        SetStatusMessage("Flight ended");
                         SendTextToSim("Bush Tracker Status: Flight ended - Thanks for working with Bush Divers");
 
                         endFuelQty = data1.fuel_qty;
@@ -924,7 +945,8 @@ namespace BushDiversTracker
                 BlockOffTime = startTime,
                 BlockOnTime = endTime,
                 Distance = currentDistance,
-                AircraftUsed = aircraftName
+                AircraftUsed = aircraftName,
+                SimUsed = version.Value.ToString()
             };
 
             bool res = false;
@@ -1016,8 +1038,7 @@ namespace BushDiversTracker
             }
             catch (Exception)
             {
-                lblErrorText.Text = "Error submitting to server";
-                lblErrorText.Visibility = Visibility.Visible;
+                SetStatusMessage("Error submitting to server", MessageState.Error);
             }
 
             if (res)
@@ -1027,11 +1048,7 @@ namespace BushDiversTracker
                 lblDistanceLabel.Visibility = Visibility.Hidden;
                 // reset pirep to draft and remove any logs
 
-                lblStatusText.Text = "Tracking Stopped";
-                lblStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#374151"));
-                lblStatusText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D1D5DB"));
-                lblErrorText.Text = "";
-                lblErrorText.Visibility = Visibility.Hidden;
+                SetStatusMessage("Tracking Stopped");
                 btnStop.Visibility = Visibility.Hidden;
                 btnStart.Visibility = Visibility.Visible;
                 btnStart.IsEnabled = true;
@@ -1039,8 +1056,7 @@ namespace BushDiversTracker
             }
             else
             {
-                lblErrorText.Text = "Issue cancelling pirep";
-                lblErrorText.Visibility = Visibility.Visible;
+                SetStatusMessage("Issue cancelling pirep", MessageState.Error);
             }
             btnStop.IsEnabled = true;
         }
@@ -1117,6 +1133,8 @@ namespace BushDiversTracker
             //    status = false;
             //}
 
+            if (dispatchData == null)
+                return false;
 
             // check fuel qty matches planned fuel
             var tolerance = decimal.ToDouble(dispatchData.PlannedFuel) * .01;
@@ -1247,6 +1265,22 @@ namespace BushDiversTracker
                 _addonBrowser.Focus();
             }
             
+        }
+
+        private void SetStatusMessage(string message, MessageState state = MessageState.OK)
+        {
+            if (state == MessageState.Error)
+            {
+                lblStatusText.Visibility = Visibility.Hidden;
+                lblErrorText.Text = message;
+                lblErrorText.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                lblErrorText.Visibility = Visibility.Hidden;
+                lblStatusText.Text = message;
+                lblStatusText.Visibility = Visibility.Visible;
+            }
         }
     }
 }
