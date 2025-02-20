@@ -9,9 +9,9 @@
     <Product>Bush Tracker</Product>
     <Authors>Bush Divers</Authors>
     <StartupObject></StartupObject>
-    <Version>1.0.7.0</Version>
-    <AssemblyVersion>1.0.7.0</AssemblyVersion>
-    <FileVersion>1.0.7.0</FileVersion>
+    <Version>1.1.0.0</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
     <UseWindowsForms>True</UseWindowsForms>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>Bush Tracker.snk</AssemblyOriginatorKeyFile>
@@ -43,18 +43,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="D:\MSFS SDK\SimConnect SDK\lib\SimConnect.dll">
+    <Content Include="$(MSFS_SDK)\SimConnect SDK\lib\SimConnect.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autoupdater.NET.Official" Version="1.7.0" />
+    <PackageReference Include="Autoupdater.NET.Official" Version="1.9.2" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Microsoft.FlightSimulator.SimConnect">
-      <HintPath>D:\MSFS SDK\SimConnect SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll</HintPath>
+      <HintPath>$(MSFS_SDK)\SimConnect SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll</HintPath>
       <Private>true</Private>
     </Reference>
   </ItemGroup>

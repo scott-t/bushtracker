@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 namespace BushDiversTracker.Models
 {
@@ -11,5 +6,9 @@ namespace BushDiversTracker.Models
     {
         [JsonPropertyName("icao")]
         public string Icao { get; set; }
+        [JsonPropertyName("lat")]
+        public decimal Lat { get; set; }
+        [JsonPropertyName("lon")]
+        public decimal Lon { get; set; }
     }
 }
