@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using BushDiversTracker.Models.Enums;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace BushDiversTracker.Models
 {
@@ -29,6 +25,8 @@ namespace BushDiversTracker.Models
         public string AircraftType { get; set; }
         [JsonPropertyName("planned_fuel")]
         public decimal PlannedFuel { get; set; }
+        [JsonPropertyName("fuel_type")]
+        public FuelType? FuelType { get; set; }
         [JsonPropertyName("cargo_weight")]
         public decimal CargoWeight { get; set; }
         [JsonPropertyName("passenger_count")]

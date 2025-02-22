@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BushDiversTracker.Models.Enums
+﻿namespace BushDiversTracker.Models.Enums
 {
+    // Must keep in sync with BushDivers VA platform
+
     enum PirepStatusType
     {
         PREFLIGHT = 0,

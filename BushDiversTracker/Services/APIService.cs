@@ -1,13 +1,10 @@
 ﻿using BushDiversTracker.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BushDiversTracker.Services
@@ -15,9 +12,9 @@ namespace BushDiversTracker.Services
     class APIService
     {
 #if !DEBUG
-        protected string baseUrl = "https://fly.bushdivers.com/api";
+        protected readonly string baseUrl = "https://fly.bushdivers.com/api";
 #else
-        protected string baseUrl = "http://localhost:8000/api";
+        protected readonly string baseUrl = System.Diagnostics.Debugger.IsAttached ? "http://localhost/api" : "https://fly.bushdivers.com/api";
 #endif
         HttpClient _http = new HttpClient();
 
@@ -47,7 +44,7 @@ namespace BushDiversTracker.Services
             else
             {
                 string msg = await res.Content.ReadAsStringAsync();
-                HelperService.WriteToLog($"Fetching dispatch cargo: {res.ReasonPhrase}");
+                HelperService.WriteToLog($"Fetching dispatch cargo: {res.ReasonPhrase} - {msg}");
                 throw new Exception($"Fetching dispatch cargo: {res.ReasonPhrase}");
             }
         }
@@ -77,7 +74,7 @@ namespace BushDiversTracker.Services
             else
             {
                 string msg = await res.Content.ReadAsStringAsync();
-                HelperService.WriteToLog($"Fetching dispatch info: {res.ReasonPhrase}");
+                HelperService.WriteToLog($"Fetching dispatch info: {res.ReasonPhrase} - {msg}");
                 throw new Exception($"Fetching dispatch info: {res.ReasonPhrase}");
             }
         }
@@ -102,7 +99,7 @@ namespace BushDiversTracker.Services
             else
             {
                 string msg = await res.Content.ReadAsStringAsync();
-                HelperService.WriteToLog($"Finding nearest airport: {res.ReasonPhrase}");
+                HelperService.WriteToLog($"Finding nearest airport: {res.ReasonPhrase} - {msg}");
                 throw new Exception($"Finding nearest airport: {res.ReasonPhrase}");
             }
         }
@@ -122,7 +119,7 @@ namespace BushDiversTracker.Services
             else
             {
                 string msg = await res.Content.ReadAsStringAsync();
-                HelperService.WriteToLog(msg);
+                HelperService.WriteToLog($"Post flight log: {res.ReasonPhrase} - {msg}");
                 return false;
             }
         }
@@ -142,7 +139,7 @@ namespace BushDiversTracker.Services
             else
             {
                 string msg = await res.Content.ReadAsStringAsync();
-                HelperService.WriteToLog(msg);
+                HelperService.WriteToLog($"Post pirep: {res.ReasonPhrase} - {msg}");
                 return false;
             }
         }
@@ -154,14 +151,14 @@ namespace BushDiversTracker.Services
         public async Task<bool> CancelTrackingAsync()
         {
             HttpResponseMessage res = await _http.GetAsync($"{baseUrl}/pirep/reset");
-            if (res.StatusCode == HttpStatusCode.OK)
+            if (res.StatusCode == HttpStatusCode.OK || res.StatusCode == HttpStatusCode.NotFound)
             {
                 return true;
             }
             else
             {
                 string msg = await res.Content.ReadAsStringAsync();
-                HelperService.WriteToLog(msg);
+                HelperService.WriteToLog($"Cancel tracking: {res.ReasonPhrase} - {msg}");
                 return false;
             }
         }
@@ -192,7 +189,7 @@ namespace BushDiversTracker.Services
             else
             {
                 string msg = await res.Content.ReadAsStringAsync();
-                HelperService.WriteToLog($"Retrieving addons: {res.ReasonPhrase}");
+                HelperService.WriteToLog($"Retrieving addons: {res.ReasonPhrase} - {msg}");
                 throw new Exception($"Retrieving addons: {res.ReasonPhrase}");
             }
         }

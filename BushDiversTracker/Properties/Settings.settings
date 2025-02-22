@@ -11,5 +11,11 @@
     <Setting Name="CommunityDir" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="SimType" Type="System.String" Scope="User">
+      <Value Profile="(Default)">MSFS</Value>
+    </Setting>
+    <Setting Name="AutoStart" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using BushDiversTracker.Models.Enums;
+using System;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace BushDiversTracker.Services
 {
@@ -173,13 +171,38 @@ namespace BushDiversTracker.Services
         /// <param name="msg">String to send to log file</param>
         public static void WriteToLog(string msg)
         {
-            var fileName = DateTime.Now.Date.ToString();
-            using (StreamWriter w = File.AppendText("log.txt"))
+            try
             {
-                w.WriteLine($"{DateTime.Now.ToLongTimeString()} {DateTime.Now.ToLongDateString()}");
-                w.WriteLine($"{msg}");
-                w.WriteLine("-------------");
+                using StreamWriter w = File.AppendText("log.txt");
+                w.WriteLine($"{DateTime.Now.ToLongTimeString()} {DateTime.Now.ToLongDateString()}: {msg}");
             }
+            catch (Exception)
+            {
+                //
+            }
+        }
+
+        /// <summary>
+        /// Rotates the log file if too large
+        /// </summary>
+        public static void RotateLog()
+        {
+            FileInfo f = new("log.txt");
+            if (f.Exists && f.Length > 512 * 1024 * 1024)
+            {
+                try
+                {
+                    if (File.Exists("log.1.txt"))
+                        File.Delete("log.1.txt");
+
+                    f.MoveTo("log.1.txt");
+                }
+                catch (Exception)
+                {
+                    //
+                }
+            }
+            
         }
 
         /// <summary>
@@ -199,6 +222,22 @@ namespace BushDiversTracker.Services
         public static decimal GalToLitre(decimal gal)
         {
             return gal * new decimal(3.785412);
+        }
+
+        /// <summary>
+        /// Convert fuel gallons to pounds
+        /// </summary>
+        /// <param name="gal">Gallons</param>
+        /// <param name="fuel">Fuel type</param>
+        /// <returns></returns>
+        public static decimal GalToLbs(decimal gal, FuelType fuel)
+        {
+            if (fuel == FuelType.AVGAS)
+                return gal * new decimal(6.00);
+            else if (fuel == FuelType.JET)
+                return gal * new decimal(6.79);
+            else
+                return new decimal();
         }
 
         /// <summary>
