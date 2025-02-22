@@ -1,4 +1,6 @@
 ﻿using Microsoft.FlightSimulator.SimConnect;
+using BushDiversTracker.Models.Enums;
+using BushDiversTracker.Models.NonApi;
 using System;
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
@@ -7,7 +9,7 @@ using System.Windows;
 
 namespace BushDiversTracker.Services
 {
-    internal class SimService
+    internal class SimServiceMSFS : ISimService
     {
         MainWindow _mainWindow;
 
@@ -39,12 +41,7 @@ namespace BushDiversTracker.Services
         // sim connect setup variables
         SimConnect simConnect = null;
         const int WM_USER_SIMCONNECT = 0x0402;
-
-        public enum SimVersion
-        {
-            FS2020,
-            FS2024
-        }
+                
         private SimVersion? version = null;
         public SimVersion? Version { get => version; }
 
@@ -81,78 +78,15 @@ namespace BushDiversTracker.Services
         //}
         
         // Sim variables
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
-        public struct SimData
-        {
-            // variables to bind to simconnect simvars
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-            public string title;
-            public int camera_state;
-            public double latitude;
-            public double longitude;
-            public double indicated_altitude;
-            public double plane_altitude;
-            public double ac_pitch;
-            public double ac_bank;
-            public double airspeed_true;
-            public double airspeed_indicated;
-            public double vspeed;
-            public double heading_m;
-            public double heading_t;
-            public double gforce;
-            public int eng1_combustion;
-            public int eng2_combustion;
-            public int eng3_combustion;
-            public int eng4_combustion;
-            public double aircraft_max_rpm;
-            public double max_rpm_attained;
-            public int zulu_time;
-            public int local_time;
-            public int on_ground;
-            public int surface_type;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 8)]
-            public string atcId;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 8)]
-            public string atcType;
-            public double fuel_qty;
-            public double fuelsystem_tank1_capacity;
-            public double unusable_fuel_qty;
-            public int is_overspeed;
-            public int is_unlimited;
-            public int payload_station_count;
-            public double payload_station_weight;
-            public double max_g;
-            public double min_g;
-            //public double eng_damage_perc;
-            //public int flap_damage;
-            //public int gear_damage;
-            //public int flap_speed_exceeded;
-            //public int gear_speed_exceeded;
-            //public int eng_mp;
-            public int fuel_flow;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 8)]
-            public string atcModel;
-            public double total_weight;
-        };
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
-        public struct SimLandingData
-        {
-            public double touchdown_bank;
-            public double touchdown_heading_m;
-            public double touchdown_heading_t;
-            public double touchdown_lat;
-            public double touchdown_lon;
-            public double touchdown_velocity;
-            public double touchdown_pitch;
-        }
-
-        public SimService(MainWindow mainWindow )
+        public SimServiceMSFS(MainWindow mainWindow )
         {
             _mainWindow = mainWindow;
         }
 
-        protected HwndSource GetHWinSource() => PresentationSource.FromVisual((System.Windows.Media.Visual)_mainWindow) as HwndSource;
+        protected HwndSource GetHWinSource() => HwndSource.FromVisual((System.Windows.Media.Visual)_mainWindow) as HwndSource;
+        //HwndSource.FromHwnd((new System.Windows.Interop.WindowInteropHelper(_mainWindow)).Handle);
+        HwndSourceHook sourceHook = null;
 
         private IntPtr WndProc(IntPtr hWnd, int iMsg, IntPtr hWParam, IntPtr hLParam, ref bool bHandled)
         {
@@ -161,10 +95,7 @@ namespace BushDiversTracker.Services
                 if (iMsg == 1026)
                 {
                     //SimConnect simConnect = this.simConnect;
-                    if (simConnect != null)
-                    {
-                        simConnect.ReceiveMessage();
-                    }
+                    simConnect?.ReceiveMessage();
                 }
             }
             catch (Exception ex)
@@ -380,11 +311,19 @@ namespace BushDiversTracker.Services
         /// </summary>
         public void OpenConnection()
         {
+            // Already connected
+            if (simConnect != null)
+                return; 
+
             try
             {
                 _mainWindow.SetStatusMessage("Connecting to sim");
 
-                GetHWinSource().AddHook(new HwndSourceHook(WndProc));
+                if (sourceHook == null)
+                {
+                    sourceHook = new HwndSourceHook(WndProc);
+                    GetHWinSource().AddHook(sourceHook);
+                }
 
                 simConnect = new SimConnect("Managed Data Request", GetHWinSource().Handle, WM_USER_SIMCONNECT, null, 0);
                 //simConnect.SubscribeToSystemEvent(EVENT_ID.EVENT_PAUSED, "Paused");
@@ -399,11 +338,14 @@ namespace BushDiversTracker.Services
                 timer.Interval = TimeSpan.FromSeconds(TIMER_INTERVAL);
                 timer.Tick += new EventHandler(Timer_Tick);
                 timer.Start();
+
+                OnSimConnected?.Invoke(this, EventArgs.Empty);
             }
             catch (COMException ex)
             {
                 HelperService.WriteToLog($"Issue connecting to sim: {ex.Message}");
-                _mainWindow.SetStatusMessage($"Issue connecting to sim: {ex.Message}", MainWindow.MessageState.Error);
+                _mainWindow.SetStatusMessage($"Issue connecting to sim. Is sim running?", MainWindow.MessageState.Error);
+                OnSimDisconnected?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -414,14 +356,15 @@ namespace BushDiversTracker.Services
         {
             if (simConnect != null)
             {
+                GetHWinSource().RemoveHook(sourceHook);
+                sourceHook = null;
                 //simConnect.UnsubscribeFromSystemEvent(EVENT_ID.EVENT_PAUSED);
                 //simConnect.UnsubscribeFromSystemEvent(EVENT_ID.EVENT_UNPAUSED);
                 simConnect.Dispose();
                 simConnect = null;
             }
 
-            if (timer != null)
-                timer.Stop();
+            timer?.Stop();
 
             OnSimDisconnected?.Invoke(this, EventArgs.Empty);
         }

@@ -11,5 +11,8 @@
     <Setting Name="CommunityDir" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="SimType" Type="System.String" Scope="User">
+      <Value Profile="(Default)">MSFS</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -69,17 +69,26 @@ namespace BushDiversTracker.Services
         protected string aircraftName;
 
         private readonly MainWindow _mainWindow = null;
-        private readonly SimService _sim = null;
         private readonly APIService _api = null;
+        private ISimService _sim = null;
 
-        public TrackerService(MainWindow mainWindow, SimService simService, APIService api)
+        public TrackerService(MainWindow mainWindow, ISimService simService, APIService api)
         {
-            // Subscribe to events
-            simService.OnSimDataReceived += SimService_OnSimDataReceived;
-            simService.OnLandingDataReceived += SimService_OnLandingDataReceived;
             _mainWindow = mainWindow;
-            _sim = simService;
             _api = api;
+            SetSimService(simService);
+        }
+
+        public async void SetSimService(ISimService simService)
+        {
+            await Stop();
+
+            _sim = simService;
+            if (_sim != null)
+            {
+                simService.OnSimDataReceived += SimService_OnSimDataReceived;
+                simService.OnLandingDataReceived += SimService_OnLandingDataReceived;
+            }
         }
 
         public void Start()
@@ -103,10 +112,9 @@ namespace BushDiversTracker.Services
                         throw new Exception("Error resetting on server");
 
                     _mainWindow.SetStatusMessage(state == TrackerState.Shutdown ? "Dispatch submitted" : "Ok");
-                    SetDispatchAndReset(null);
-                    
-                    return true;
+                    SetDispatchAndReset(null);   
                 }
+                return true;
             }
             catch (Exception ex)
             {
@@ -143,7 +151,7 @@ namespace BushDiversTracker.Services
                 dispatchData.Arrival = newLocation.Icao;
                 OnSetDispatch?.Invoke(this, dispatchData);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 //_mainWindow.SetStatusMessage(e.Message, MainWindow.MessageState.Error);
                 _mainWindow.SetStatusMessage("No airport within 2NM", MainWindow.MessageState.Error);
@@ -246,7 +254,7 @@ namespace BushDiversTracker.Services
             OnTrackerStateChanged?.Invoke(this, state);
         }
 
-        private void SimService_OnSimDataReceived(object sender, SimService.SimData data)
+        private void SimService_OnSimDataReceived(object sender, SimData data)
         {
             // If we have no dispatch data, ignore
             if (state == TrackerState.None || dispatchData == null)
@@ -394,8 +402,8 @@ namespace BushDiversTracker.Services
                     // calc distance
                     var d = HelperService.CalculateDistance(lastLat, lastLon, data.latitude, data.longitude);
                     if (d > 50 
-                        || (_sim.Version == SimService.SimVersion.FS2024 
-                            && (data.camera_state == SimService.CameraState.FS2024.WORLD_MAP || data.camera_state == SimService.CameraState.FS2024.MAIN_MENU)
+                        || (_sim.Version == SimVersion.FS2024 
+                            && (data.camera_state == SimServiceMSFS.CameraState.FS2024.WORLD_MAP || data.camera_state == SimServiceMSFS.CameraState.FS2024.MAIN_MENU)
                             )
                         )
                     {
@@ -442,7 +450,7 @@ namespace BushDiversTracker.Services
             // simConnect.SetDataOnSimObject(SET_DATA.ATC_ID, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, txtRegistration.Text);
         }
 
-        private void SimService_OnLandingDataReceived(object sender, SimService.SimLandingData data)
+        private void SimService_OnLandingDataReceived(object sender, SimLandingData data)
         {
             if (landingRate < data.touchdown_velocity)
             {
@@ -533,7 +541,7 @@ namespace BushDiversTracker.Services
         /// Sends a flight log to the api
         /// </summary>
         /// <param name="d">data from simconnect</param>
-        public async Task SendFlightLog(SimService.SimData d)
+        public async Task SendFlightLog(SimData d)
         {
             var log = new FlightLog()
             {

@@ -17,6 +17,7 @@
     <AssemblyOriginatorKeyFile>Bush Tracker.snk</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

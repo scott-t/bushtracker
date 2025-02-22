@@ -1,4 +1,5 @@
 using BushDiversTracker.Models;
+using BushDiversTracker.Models.NonApi;
 using BushDiversTracker.Models.Enums;
 using BushDiversTracker.Services;
 using System;
@@ -10,6 +11,7 @@ using System.Reflection;
 using static BushDiversTracker.Services.TrackerService;
 using System.Linq;
 using System.Windows.Controls;
+using BushDiversTracker.Properties;
 
 namespace BushDiversTracker
 {
@@ -20,7 +22,7 @@ namespace BushDiversTracker
     {
         APIService _api;
         AddonBrowser _addonBrowser;
-        SimService _simConnect;
+        ISimService _simConnect;
         TrackerService _tracker;
 
         internal enum MessageState
@@ -71,15 +73,19 @@ namespace BushDiversTracker
             var version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             lblVersion.Content = version;
 
-            if (Properties.Settings.Default.UseMetric)
+            if (Settings.Default.UseMetric)
                 rdoUnitMetric.IsChecked = true;
             else
                 rdoUnitUS.IsChecked = true;
 
-            _simConnect = new SimService(this);
-            _simConnect.OnSimConnected += SimConnect_OnSimConnected;
-            _simConnect.OnSimDisconnected += SimConnect_OnSimDisconnected;
-            _simConnect.OnSimDataReceived += SimConnect_OnSimDataReceived;
+            btnConnect_SetSim(Settings.Default.SimType != "XP" ? mnuSetSimMSFS : mnuSetSimXP, null);
+
+            if (_simConnect != null)
+            {
+                _simConnect.OnSimConnected += SimConnect_OnSimConnected;
+                _simConnect.OnSimDisconnected += SimConnect_OnSimDisconnected;
+                _simConnect.OnSimDataReceived += SimConnect_OnSimDataReceived;
+            }
 
             _tracker = new TrackerService(this, _simConnect, _api);
             _tracker.OnTrackerStateChanged += Tracker_OnStateChange;
@@ -94,6 +100,7 @@ namespace BushDiversTracker
         {
             elConnection.Fill = Brushes.Green;
             elConnection.Stroke = Brushes.Green;
+            btnConnect.IsEnabled = false;
             SetStatusMessage("Connected");
         }
 
@@ -104,7 +111,7 @@ namespace BushDiversTracker
             btnConnect.IsEnabled = true;
         }
 
-        private void SimConnect_OnSimDataReceived(object sender, SimService.SimData data)
+        private void SimConnect_OnSimDataReceived(object sender, SimData data)
         {
             if (_tracker?.Dispatch != null)
                 txtSimFuel.Text = FormatFuel(new decimal(data.fuel_qty), _tracker.Dispatch.FuelType);
@@ -203,8 +210,48 @@ namespace BushDiversTracker
 
         private void btnConnect_Click(object sender, RoutedEventArgs e)
         {
-            btnConnect.IsEnabled = false;
-            _simConnect.OpenConnection();
+            if (_simConnect != null)
+            {
+                btnConnect.IsEnabled = false;
+                _simConnect.OpenConnection();
+            }
+            else
+                SetStatusMessage("Connection type not set", MessageState.Error);
+        }
+
+        private void btnConnect_ContextOpen(object sender, RoutedEventArgs e)
+        {
+            e.Handled = _simConnect != null && _simConnect.IsConnected;
+        }
+
+        private async void btnConnect_SetSim(object sender, RoutedEventArgs e)
+        {
+            if (_tracker != null)
+                await _tracker.Stop();
+
+            _simConnect?.CloseConnection();
+            if (sender == mnuSetSimMSFS)
+            {
+                _simConnect = new SimService(this);
+                Settings.Default.SimType = "MSFS";
+                lblConnectStatus.Content = "MSFS Connection Status:";
+                mnuSetSimMSFS.IsChecked = true;
+                mnuSetSimXP.IsChecked = false;
+            }
+            else
+            {
+                _simConnect = null;
+                Settings.Default.SimType = "XP";
+                lblConnectStatus.Content = "XPlane Connection Status:";
+                mnuSetSimMSFS.IsChecked = false;
+                mnuSetSimXP.IsChecked = true;
+            }
+
+            if (e != null) 
+            {
+                Settings.Default.Save();
+                _simConnect?.OpenConnection();
+            }
         }
 
         private void rdoUnitType_Checked(object sender, RoutedEventArgs e)
@@ -246,7 +293,7 @@ namespace BushDiversTracker
                 await _tracker.Stop();
 
             if (!e.Cancel)
-                _simConnect.CloseConnection();
+                _simConnect?.CloseConnection();
         }
 
         #endregion
@@ -403,6 +450,11 @@ namespace BushDiversTracker
                 lblStatusText.Text = message;
                 lblStatusText.Visibility = Visibility.Visible;
             }
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            _simConnect?.OpenConnection();
         }
     }
 }

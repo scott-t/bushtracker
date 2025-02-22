@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:BushDiversTracker"
         mc:Ignorable="d"
         SizeToContent="WidthAndHeight"
-        Title="Bush Tracker" Background="White" Closing="Window_Closing" ResizeMode="CanMinimize"
+        Title="Bush Tracker" Background="White" Closing="Window_Closing" ResizeMode="CanMinimize" Loaded="Window_Loaded"
         >
     <Grid Width="755">
         <Grid.ColumnDefinitions>
@@ -71,7 +71,14 @@
             </Grid>
         </GroupBox>
         <Ellipse x:Name="elConnection" Height="10" Margin="732,10,0,0" Stroke="Red" Fill="Red" VerticalAlignment="Top" RenderTransformOrigin="-0.3,-1.596" HorizontalAlignment="Left" Width="10"/>
-        <Button x:Name="btnConnect" Click="btnConnect_Click" Content="Connect to Sim" Padding="5" Margin="10,87,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99"/>
+        <Button x:Name="btnConnect" ContextMenuOpening="btnConnect_ContextOpen" Click="btnConnect_Click" Content="Connect to Sim" Padding="5" Margin="10,87,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99">
+            <Button.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="MSFS (SimConnect)" Click="btnConnect_SetSim" Name="mnuSetSimMSFS"/>
+                    <MenuItem Header="XPlane" Click="btnConnect_SetSim" Name="mnuSetSimXP" IsEnabled="False" />
+                </ContextMenu>
+            </Button.ContextMenu>
+        </Button>
         <Label x:Name="lblFetch" Content="fetching..." HorizontalAlignment="Left" Margin="10,147,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="53"/>
         <Button x:Name="btnSubmit" Click="btnSubmit_Click" IsEnabled="False" Content="Submit Pirep" Padding="5" Margin="10,343,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99"/>
         <Label x:Name="lblStart" Content="checking info..." HorizontalAlignment="Left" Margin="9,265,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="99"/>
