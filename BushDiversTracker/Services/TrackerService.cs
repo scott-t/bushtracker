@@ -4,6 +4,7 @@ using BushDiversTracker.Models;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
+using BushDiversTracker.Properties;
 
 namespace BushDiversTracker.Services
 {
@@ -40,6 +41,7 @@ namespace BushDiversTracker.Services
 
         private TrackerState state = TrackerState.None;
         public TrackerState State { get => state; }
+        public bool AllowStart = Settings.Default.AutoStart;
 
         // Bush Tracker variables
         private Dispatch dispatchData = null;
@@ -286,12 +288,19 @@ namespace BushDiversTracker.Services
                     CurrentEngineStatus = bEnginesRunning
                 }))
                 {
-                    SetTrackerState(TrackerState.ReadyToStart);
-                    _mainWindow.SetStatusMessage("Pre-flight|Loading");
-                    _sim.SendTextToSim("Bush Tracker Status: Pre-Flight - Ready");
+                    if (!AllowStart)
+                    {
+                        _mainWindow.SetStatusMessage("Waiting for start checkbox", MainWindow.MessageState.Neutral);
+                    }
+                    else
+                    {
+                        SetTrackerState(TrackerState.ReadyToStart);
+                        _mainWindow.SetStatusMessage("Pre-flight|Loading");
+                        _sim.SendTextToSim("Bush Tracker Status: Pre-Flight - Ready");
 
-                    // Clear landing rate so next change event as per simconnect is viewed as 'new'
-                    landingRate = 0.0;
+                        // Clear landing rate so next change event as per simconnect is viewed as 'new'
+                        landingRate = 0.0;
+                    }
                 }
             }
             else if (state == TrackerState.ReadyToStart)
@@ -562,6 +571,7 @@ namespace BushDiversTracker.Services
             try
             {
                 await _api.PostFlightLogAsync(log);
+                _mainWindow.SetStatusMessage("Flight log updated", MainWindow.MessageState.OK);
             }
             catch (Exception e)
             {

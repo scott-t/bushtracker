@@ -92,6 +92,8 @@ namespace BushDiversTracker
             _tracker.OnDispatchError += Tracker_OnDispatchError;
             _tracker.OnSetDispatch += Tracker_SetDispatchData;
             _tracker.OnStatusMessage += (sender, message) => SetStatusMessage(message.Message, message.State);
+
+            chkAutoStart.IsChecked = Settings.Default.AutoStart;
         }
 
         #region SimConnect
@@ -135,11 +137,13 @@ namespace BushDiversTracker
                     lblDistanceLabel.Visibility = Visibility.Hidden;
                     btnSubmit.IsEnabled = false;
                     lblSubmitting.Visibility = Visibility.Hidden;
+                    chkAutoStart.IsEnabled = true;
                     break;
 
                 case TrackerState.HasDispatch:
                     btnStop.IsEnabled = true;
                     btnFetchBookings.IsEnabled = true;
+                    chkAutoStart.IsEnabled = true;
                     break;
 
                 case TrackerState.ReadyToStart:
@@ -147,14 +151,18 @@ namespace BushDiversTracker
                     lblDistanceLabel.Visibility = Visibility.Visible;
                     btnStop.IsEnabled = true;
                     btnFetchBookings.IsEnabled = false;
+                    chkAutoStart.IsEnabled = false;
                     break;
 
                 case TrackerState.InFlight:
                     btnSubmit.IsEnabled = false;
+                    chkAutoStart.IsEnabled = false;
+                    chkAutoStart.IsChecked = Settings.Default.AutoStart;
                     break;
 
                 case TrackerState.Shutdown:
                     btnSubmit.IsEnabled = true;
+                    chkAutoStart.IsEnabled = true;
                     break;
 
                 default:
@@ -205,6 +213,7 @@ namespace BushDiversTracker
             if (MessageBox.Show("If you cancel you will need to restart your flight at a later time.\n\nAre you sure you wish to cancel your flight?", "Cancel?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 await _tracker.Stop();
+                chkAutoStart.IsChecked = Settings.Default.AutoStart;
             }
         }
 
@@ -274,6 +283,12 @@ namespace BushDiversTracker
                 }
             }
 
+            if (chkAutoStart.IsEnabled)
+            {
+                Settings.Default.AutoStart = chkAutoStart.IsChecked == true;
+                Settings.Default.Save();
+            }
+
             if (_tracker.State > TrackerState.HasDispatch)
             {
                 if (_tracker.State == TrackerState.Shutdown || MessageBox.Show("A flight is currently in progress. You will need to restart your flight at a later time.\n\nAre you sure you wish to quit?", "Cancel current flight?", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
@@ -311,7 +326,9 @@ namespace BushDiversTracker
             if (dispatch == null)
             {
                 grpFlight.Visibility = Visibility.Hidden;
+                txtKey.IsEnabled = true;
                 dgBookings.ItemsSource = null;
+                chkAutoStart.IsChecked = Settings.Default.AutoStart;
                 return;
             }
 
@@ -328,6 +345,7 @@ namespace BushDiversTracker
             txtArrLon.Text = dispatch.ArrLon.ToString();
             string tourText  = dispatch.Tour != null ? dispatch.Tour.ToString() : "";
             txtTour.Text = tourText;
+            txtKey.IsEnabled = false;
             UpdateDispatchWeight();
         }
 
@@ -455,6 +473,11 @@ namespace BushDiversTracker
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             _simConnect?.OpenConnection();
+        }
+
+        private void chkAutoStart_Checked(object sender, RoutedEventArgs e)
+        {
+            _tracker.AllowStart = chkAutoStart.IsChecked == true;
         }
     }
 }

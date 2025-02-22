@@ -12,9 +12,9 @@ namespace BushDiversTracker.Services
     class APIService
     {
 #if !DEBUG
-        protected string baseUrl = "https://fly.bushdivers.com/api";
+        protected readonly string baseUrl = "https://fly.bushdivers.com/api";
 #else
-        protected string baseUrl = "http://localhost/api";
+        protected readonly string baseUrl = System.Diagnostics.Debugger.IsAttached ? "http://localhost/api" : "https://fly.bushdivers.com/api";
 #endif
         HttpClient _http = new HttpClient();
 
@@ -151,7 +151,7 @@ namespace BushDiversTracker.Services
         public async Task<bool> CancelTrackingAsync()
         {
             HttpResponseMessage res = await _http.GetAsync($"{baseUrl}/pirep/reset");
-            if (res.StatusCode == HttpStatusCode.OK)
+            if (res.StatusCode == HttpStatusCode.OK || res.StatusCode == HttpStatusCode.NotFound)
             {
                 return true;
             }
