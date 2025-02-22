@@ -221,7 +221,7 @@ namespace BushDiversTracker
 
         private void btnConnect_ContextOpen(object sender, RoutedEventArgs e)
         {
-            e.Handled = _simConnect != null && _simConnect.IsConnected;
+            e.Handled = (_simConnect != null && _simConnect.IsConnected) || !System.Diagnostics.Debugger.IsAttached;
         }
 
         private async void btnConnect_SetSim(object sender, RoutedEventArgs e)
@@ -232,7 +232,7 @@ namespace BushDiversTracker
             _simConnect?.CloseConnection();
             if (sender == mnuSetSimMSFS)
             {
-                _simConnect = new SimService(this);
+                _simConnect = new SimServiceMSFS(this);
                 Settings.Default.SimType = "MSFS";
                 lblConnectStatus.Content = "MSFS Connection Status:";
                 mnuSetSimMSFS.IsChecked = true;
