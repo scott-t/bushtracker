@@ -89,9 +89,13 @@ namespace BushDiversTracker
 
             _tracker = new TrackerService(this, _simConnect, _api);
             _tracker.OnTrackerStateChanged += Tracker_OnStateChange;
+            _tracker.OnFlightStatusChanged += (sender, status) => lblFlightStatus.Content = status.ToString();
             _tracker.OnDispatchError += Tracker_OnDispatchError;
             _tracker.OnSetDispatch += Tracker_SetDispatchData;
             _tracker.OnStatusMessage += (sender, message) => SetStatusMessage(message.Message, message.State);
+
+            lblTrackerStatus.Content = "Not tracking";
+            lblFlightStatus.Visibility = Visibility.Hidden;
 
             chkAutoStart.IsChecked = Settings.Default.AutoStart;
         }
@@ -138,37 +142,47 @@ namespace BushDiversTracker
                     btnSubmit.IsEnabled = false;
                     lblSubmitting.Visibility = Visibility.Hidden;
                     chkAutoStart.IsEnabled = true;
+                    lblFlightStatus.Visibility = Visibility.Hidden;
+                    lblTrackerStatus.Content = "Not tracking";
                     break;
 
                 case TrackerState.HasDispatch:
                     btnStop.IsEnabled = true;
                     btnFetchBookings.IsEnabled = true;
                     chkAutoStart.IsEnabled = true;
+                    lblFlightStatus.Visibility = Visibility.Visible;
+                    lblTrackerStatus.Content = "Has dispatch";
                     break;
 
                 case TrackerState.ReadyToStart:
                     lblDistance.Visibility = Visibility.Visible;
                     lblDistanceLabel.Visibility = Visibility.Visible;
+                    lblFlightStatus.Visibility = Visibility.Visible;
                     btnStop.IsEnabled = true;
                     btnFetchBookings.IsEnabled = false;
                     chkAutoStart.IsEnabled = false;
+                    lblTrackerStatus.Content = "Ready to start";
                     break;
 
                 case TrackerState.InFlight:
                     btnSubmit.IsEnabled = false;
                     chkAutoStart.IsEnabled = false;
                     chkAutoStart.IsChecked = Settings.Default.AutoStart;
+                    lblTrackerStatus.Content = "Flight active";
                     break;
 
                 case TrackerState.Shutdown:
                     btnSubmit.IsEnabled = true;
                     chkAutoStart.IsEnabled = true;
+                    lblTrackerStatus.Content = "Shutdown";
                     break;
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state));
 
             }
+
+            HelperService.WriteToLog($"Tracker state changed to {state}");
         }
 
         private void Tracker_OnDispatchError(object sender, TrackingStartErrorArgs status)
@@ -478,6 +492,11 @@ namespace BushDiversTracker
         private void chkAutoStart_Checked(object sender, RoutedEventArgs e)
         {
             _tracker.AllowStart = chkAutoStart.IsChecked == true;
+        }
+
+        private void chkQuickstart_Checked(object sender, RoutedEventArgs e)
+        {
+            _tracker.AllowEngineHotstart = chkQuickstart.IsChecked == true;
         }
     }
 }

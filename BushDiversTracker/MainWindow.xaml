@@ -27,7 +27,7 @@
         <DataGrid x:Name="dgBookings" Margin="132,87,0,0" CanUserAddRows="False" HorizontalGridLinesBrush="#FF4B4949" VerticalGridLinesBrush="#FF4B4949" HorizontalAlignment="Left" Width="610" Height="100" VerticalAlignment="Top" ColumnWidth="Auto" MinColumnWidth="40" />
         <!--<Button x:Name="btnStart" Click="btnStart_Click" IsEnabled="False"  Content="Start Flight" Padding="5" Margin="10,242,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99"/>-->
         <Button x:Name="btnStop" Click="btnStop_Click" IsEnabled="True" Content="Cancel Flight" HorizontalAlignment="Left" Padding="5" Margin="10,242,0,0" VerticalAlignment="Top" Height="28" Width="99"/>
-        <GroupBox x:Name="grpFlight" Margin="132,228,0,0" VerticalAlignment="Top" Height="182" HorizontalAlignment="Left" Width="610">
+        <GroupBox x:Name="grpFlight" Margin="136,228,0,0" VerticalAlignment="Top" Height="182" HorizontalAlignment="Left" Width="606">
             <GroupBox.Header>
                 Dispatch Details
             </GroupBox.Header>
@@ -80,17 +80,20 @@
             </Button.ContextMenu>
         </Button>
         <Label x:Name="lblFetch" Content="fetching..." HorizontalAlignment="Left" Margin="10,147,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="53"/>
-        <Button x:Name="btnSubmit" Click="btnSubmit_Click" IsEnabled="False" Content="Submit Pirep" Padding="5" Margin="10,343,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99"/>
+        <Button x:Name="btnSubmit" Click="btnSubmit_Click" IsEnabled="False" Content="Submit Pirep" Padding="5" Margin="10,324,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99"/>
         <Label x:Name="lblStart" Content="checking info..." HorizontalAlignment="Left" Margin="9,265,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="99"/>
         <Label x:Name="lblVersion" Content="" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" Height="26" Width="50" RenderTransformOrigin="0.46,0.117" FontSize="8"/>
         <Label x:Name="lblConnectStatus" Content="MSFS Connection Status:" HorizontalAlignment="Left" Margin="583,1,0,0" VerticalAlignment="Top"/>
         <Label x:Name="lblDistanceLabel" Content="Distance:" HorizontalAlignment="Left" Margin="9,265,0,0" VerticalAlignment="Top" FontSize="10"/>
         <Label x:Name="lblDistance" Content="0" HorizontalAlignment="Left" Margin="58,265,0,0" VerticalAlignment="Top" FontSize="10" RenderTransformOrigin="0.624,-0.93"/>
         <Label x:Name="lblDeadHead" Content="This is a deadhead flight, there is no cargo" HorizontalAlignment="Left" Margin="132,61,0,0" VerticalAlignment="Top" FontSize="10"/>
-        <Label x:Name="lblSubmitting" Content="submitting..." HorizontalAlignment="Left" Margin="10,366,0,0" VerticalAlignment="Top" FontSize="10" RenderTransformOrigin="0.577,0.019"/>
-        <RadioButton x:Name="rdoUnitUS" Content="US" Height="15" Margin="10,389,0,0" VerticalAlignment="Top" GroupName="unitOfMeasure" HorizontalAlignment="Left" Width="45" Checked="rdoUnitType_Checked"/>
-        <RadioButton x:Name="rdoUnitMetric" Content="Metric" HorizontalAlignment="Left" Height="15" Margin="55,389,0,0" VerticalAlignment="Top" Width="53" GroupName="unitOfMeasure" Checked="rdoUnitType_Checked"/>
+        <Label x:Name="lblSubmitting" Content="submitting..." HorizontalAlignment="Left" Margin="10,348,0,0" VerticalAlignment="Top" FontSize="10" RenderTransformOrigin="0.577,0.019"/>
+        <RadioButton x:Name="rdoUnitUS" Content="US" Height="15" Margin="10,376,0,0" VerticalAlignment="Top" GroupName="unitOfMeasure" HorizontalAlignment="Left" Width="45" Checked="rdoUnitType_Checked"/>
+        <RadioButton x:Name="rdoUnitMetric" Content="Metric" HorizontalAlignment="Left" Height="15" Margin="55,376,0,0" VerticalAlignment="Top" Width="53" GroupName="unitOfMeasure" Checked="rdoUnitType_Checked"/>
         <Button x:Name="btnAddons" Content="BD Addons" Visibility="Hidden" Padding="5" Margin="643,415,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99" Click="btnAddons_Click"/>
-        <CheckBox x:Name="chkAutoStart" Content="Allow tracking start" Margin="8,422,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="chkAutoStart_Checked" Unchecked="chkAutoStart_Checked"/>
+        <CheckBox x:Name="chkAutoStart" Content="Allow tracking start" Margin="10,408,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="chkAutoStart_Checked" Unchecked="chkAutoStart_Checked" ToolTip="When checked, BushTracker will automatically attempt to start tracking your flight"/>
+        <Label x:Name="lblFlightStatus" Content="..." HorizontalAlignment="Left" Margin="10,299,0,0" VerticalAlignment="Top" FontSize="10" Height="22" Width="99"/>
+        <Label x:Name="lblTrackerStatus" Content="..." HorizontalAlignment="Left" Margin="10,281,0,0" VerticalAlignment="Top" FontSize="10" Height="22" Width="99"/>
+        <CheckBox x:Name="chkQuickstart" Content="Allow running engine" Margin="10,428,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="chkQuickstart_Checked" Unchecked="chkQuickstart_Checked" ToolTip="When checked, BushTracker will permit tracking start with engine already running.&#x0a;&#x0a;We reserve the right to make a frowny face and deduct imaginary internet points."/>
     </Grid>
 </Window>

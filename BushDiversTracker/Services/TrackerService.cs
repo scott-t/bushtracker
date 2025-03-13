@@ -42,6 +42,7 @@ namespace BushDiversTracker.Services
         private TrackerState state = TrackerState.None;
         public TrackerState State { get => state; }
         public bool AllowStart = Settings.Default.AutoStart;
+        public bool AllowEngineHotstart = false;
 
         // Bush Tracker variables
         private Dispatch dispatchData = null;
@@ -55,7 +56,18 @@ namespace BushDiversTracker.Services
         private double endFuelQty;
         private string startTime;
         private string endTime;
+        private bool engineHotstart;
         private PirepStatusType flightStatus;
+        public PirepStatusType FlightStatus { get => flightStatus; private set {
+                if (flightStatus == value)
+                    return;
+
+                flightStatus = value;
+                OnFlightStatusChanged?.Invoke(this, flightStatus);
+            }
+        }
+        public event EventHandler<PirepStatusType> OnFlightStatusChanged;
+
         protected double lastHeading;
         protected double lastAltitude;
         protected double landingRate;
@@ -136,7 +148,7 @@ namespace BushDiversTracker.Services
             if (distance <= 2)
                 return true;
 
-                // get nearest airport and update pirep destination (return icao)
+            // get nearest airport and update pirep destination (return icao)
             NewLocationRequest req = new()
             {
                 Lat = lastLat,
@@ -192,7 +204,8 @@ namespace BushDiversTracker.Services
                 BlockOnTime = endTime,
                 Distance = currentDistance,
                 AircraftUsed = aircraftName,
-                SimUsed = _sim.Version.Value.ToString()
+                SimUsed = _sim.Version.Value.ToString(),
+                EngineHotStart = engineHotstart
             };
 
             bool res = false;
@@ -239,9 +252,12 @@ namespace BushDiversTracker.Services
                 endFuelQty = 0.0;
                 startTime = "";
                 endTime = "";
-                flightStatus = dispatchData != null ? PirepStatusType.BOARDING : PirepStatusType.PREFLIGHT;
+                FlightStatus = dispatchData != null ? PirepStatusType.BOARDING : PirepStatusType.PREFLIGHT;
                 lastHeading = 0;
                 lastAltitude = 0;
+                engineHotstart = false;
+
+                // Landing vars not reset here, the tracker state logic does it when setting ready to start
 
                 if (dispatchData != null)
                     _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.BOARDING });
@@ -256,7 +272,7 @@ namespace BushDiversTracker.Services
             OnTrackerStateChanged?.Invoke(this, state);
         }
 
-        private void SimService_OnSimDataReceived(object sender, SimData data)
+        private async void SimService_OnSimDataReceived(object sender, SimData data)
         {
             // If we have no dispatch data, ignore
             if (state == TrackerState.None || dispatchData == null)
@@ -285,7 +301,7 @@ namespace BushDiversTracker.Services
                     Pax = 0,
                     CurrentLat = data.latitude,
                     CurrentLon = data.longitude,
-                    CurrentEngineStatus = bEnginesRunning
+                    CurrentEngineStatus = bEnginesRunning && !AllowEngineHotstart
                 }))
                 {
                     if (!AllowStart)
@@ -294,6 +310,7 @@ namespace BushDiversTracker.Services
                     }
                     else
                     {
+                        engineHotstart = bEnginesRunning;
                         SetTrackerState(TrackerState.ReadyToStart);
                         _mainWindow.SetStatusMessage("Pre-flight|Loading");
                         _sim.SendTextToSim("Bush Tracker Status: Pre-Flight - Ready");
@@ -310,7 +327,7 @@ namespace BushDiversTracker.Services
                 {
                     startTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
                     startFuelQty = data.fuel_qty;
-                    flightStatus = PirepStatusType.BOARDING;
+                    FlightStatus = PirepStatusType.BOARDING;
                     SetTrackerState(TrackerState.InFlight);
 
                     _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.BOARDING });                
@@ -320,25 +337,25 @@ namespace BushDiversTracker.Services
             {
                 bool onGround = Convert.ToBoolean(data.on_ground);
                 // check for take off
-                if (flightStatus == PirepStatusType.BOARDING && !onGround && data.plane_altitude > 200) // arbitrary number to avoid advancing state on bouncy water takeoff
+                if (FlightStatus == PirepStatusType.BOARDING && !onGround && data.plane_altitude > 200) // arbitrary number to avoid advancing state on bouncy water takeoff
                 {
-                    flightStatus = PirepStatusType.DEPARTED;
+                    FlightStatus = PirepStatusType.DEPARTED;
                     _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.DEPARTED });
 
                     _mainWindow.SetStatusMessage("Departed");
                     _sim.SendTextToSim("Bush Tracker Status: Departed - Have a good flight!");
                 }
-                else if (flightStatus == PirepStatusType.DEPARTED && data.plane_altitude > 1000)
+                else if (FlightStatus == PirepStatusType.DEPARTED && data.plane_altitude > 1000)
                 {
-                    flightStatus = PirepStatusType.CRUISE;
+                    FlightStatus = PirepStatusType.CRUISE;
                     _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.CRUISE });
                     _mainWindow.SetStatusMessage("Cruise");
                 }
-                else if (flightStatus == PirepStatusType.CRUISE)
+                else if (FlightStatus == PirepStatusType.CRUISE)
                 {
                     if (onGround && data.airspeed_true < 25)
                     {
-                        flightStatus = PirepStatusType.LANDED;
+                        FlightStatus = PirepStatusType.LANDED;
                         _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.LANDED });
 
                         _mainWindow.SetStatusMessage("Landed");
@@ -364,17 +381,17 @@ namespace BushDiversTracker.Services
                     }
                    
                 }
-                else if (flightStatus == PirepStatusType.LANDED)
+                else if (FlightStatus == PirepStatusType.LANDED)
                 {
                     if (!onGround && data.plane_altitude > 50)
                     {
-                        flightStatus = PirepStatusType.CRUISE;
+                        FlightStatus = PirepStatusType.CRUISE;
                         _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.CRUISE });
                         _mainWindow.SetStatusMessage("Cruise");
                     }
                     else if (!bEnginesRunning && data.airspeed_true < 25)
                     {
-                        flightStatus = PirepStatusType.ARRIVED;
+                        FlightStatus = PirepStatusType.ARRIVED;
                         SetTrackerState(TrackerState.Shutdown);
                         
                         _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.ARRIVED });
@@ -398,7 +415,7 @@ namespace BushDiversTracker.Services
                 if (bEnginesRunning)
                 {
                     SetTrackerState(TrackerState.InFlight);
-                    flightStatus = PirepStatusType.LANDED;
+                    FlightStatus = PirepStatusType.LANDED;
                     _mainWindow.SetStatusMessage("Landed");
                     _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.LANDED });
                 }
@@ -416,14 +433,24 @@ namespace BushDiversTracker.Services
                             )
                         )
                     {
-                        SetTrackerState(TrackerState.None);
-                        var task = _api.CancelTrackingAsync();
-                        MessageBox.Show("It looks like you have abandoned your flight, tracking will now stop and your progress cancelled." + "\n" + "You can start your flight again by returning to the departure location", "Bush Divers", MessageBoxButton.OK);
-                        task.Wait();
-                        if (task.IsCompletedSuccessfully && task.Result)
+                        if (state == TrackerState.Shutdown)
                         {
-                            _mainWindow.SetStatusMessage("Tracking stopped");
-                            SetDispatchAndReset(null);
+                            state = TrackerState.None;
+                            await SubmitFlight();
+                        }
+                        else
+                        {
+                            Task<bool> task = _api.CancelTrackingAsync();
+
+                            SetTrackerState(TrackerState.None);
+                            MessageBox.Show("It looks like you have abandoned your flight, tracking will now stop and your progress cancelled." + "\n" + "You can start your flight again by returning to the departure location", "Bush Divers", MessageBoxButton.OK);
+
+                            task.Wait();
+                            if (task.IsCompletedSuccessfully && task.Result)
+                            {
+                                _mainWindow.SetStatusMessage("Tracking stopped");
+                                SetDispatchAndReset(null);
+                            }
                         }
 
                         return;
@@ -469,6 +496,8 @@ namespace BushDiversTracker.Services
                 landingLat = data.touchdown_lat;
                 landingLon = data.touchdown_lon;
             }
+
+            HelperService.WriteToLog("Landing data received: " + data.touchdown_velocity.ToString("0.##") + "fpm " + data.touchdown_pitch.ToString("0.##") + "deg / " + data.touchdown_bank.ToString("0.##") + "deg at " + data.touchdown_lat.ToString("0.##") + " " + data.touchdown_lon.ToString("0.##"));
         }
 
 

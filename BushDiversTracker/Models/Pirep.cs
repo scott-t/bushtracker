@@ -28,5 +28,7 @@ namespace BushDiversTracker.Models
         public string AircraftUsed { get; set; }
         [JsonPropertyName("sim_used")]
         public string SimUsed { get; set; }
+        [JsonPropertyName("engine_hotstart")]
+        public bool EngineHotStart { get; set; }
     }
 }
