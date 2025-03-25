@@ -38,6 +38,13 @@ namespace BushDiversTracker
 
             HelperService.RotateLog();
 
+            if (Settings.Default.IsUpdateRequired)
+            {
+                Settings.Default.Upgrade();
+                Settings.Default.IsUpdateRequired = false;
+                Settings.Default.Save();
+            }
+
             // Initialise visibility here to help UI editability
             lblErrorText.Visibility = Visibility.Hidden;
             grpFlight.Visibility = Visibility.Hidden;
