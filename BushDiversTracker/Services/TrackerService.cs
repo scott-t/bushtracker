@@ -362,7 +362,7 @@ namespace BushDiversTracker.Services
                         _sim.SendTextToSim("Bush Tracker Status: Landed");
                     }
 
-                    if (!lastOnground && data.surface_type == 2) // landed on water
+                    if (onGround && !lastOnground && data.surface_type == 2) // landed on water
                     {
                         var rate = -(data.vspeed + lastVs) * 60.0 / 2.0;    // f/s to f/m... api needs f/s on the pirep progress log
 
