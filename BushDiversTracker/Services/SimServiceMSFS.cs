@@ -48,6 +48,7 @@ namespace BushDiversTracker.Services
         public bool IsConnected { get => simConnect != null; }
         private int simCameraState = 0;
         public bool IsUserControlled { get => IsConnected && (simCameraState == CameraState.COCKPIT || simCameraState == CameraState.DRONE || simCameraState == CameraState.CHASE); }
+        public bool SendSimText { get; set; }
 
         private enum DEFINITIONS
         {
@@ -79,9 +80,10 @@ namespace BushDiversTracker.Services
         
         // Sim variables
 
-        public SimServiceMSFS(MainWindow mainWindow )
+        public SimServiceMSFS(MainWindow mainWindow)
         {
             _mainWindow = mainWindow;
+            SendSimText = _mainWindow.chkTextToSim.IsChecked == true;
         }
 
         protected HwndSource GetHWinSource() => HwndSource.FromVisual((System.Windows.Media.Visual)_mainWindow) as HwndSource;
@@ -398,7 +400,8 @@ namespace BushDiversTracker.Services
         /// <param name="text">string to be sent to sim</param>
         public void SendTextToSim(string text)
         {
-            simConnect.Text(SIMCONNECT_TEXT_TYPE.PRINT_BLACK, 5, SIMCONNECT_EVENT_FLAG.DEFAULT, text);
+            if (SendSimText)
+                simConnect.Text(SIMCONNECT_TEXT_TYPE.PRINT_BLACK, 5, SIMCONNECT_EVENT_FLAG.DEFAULT, text);
         }
 
     }

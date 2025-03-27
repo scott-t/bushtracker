@@ -69,7 +69,7 @@ namespace BushDiversTracker
 
             btnStop.IsEnabled = false;
 
-            txtKey.Password = Properties.Settings.Default.Key;
+            txtKey.Password = Settings.Default.Key;
             _api = new APIService();
             if (!System.Diagnostics.Debugger.IsAttached)
             {
@@ -105,6 +105,7 @@ namespace BushDiversTracker
             lblFlightStatus.Visibility = Visibility.Hidden;
 
             chkAutoStart.IsChecked = Settings.Default.AutoStart;
+            chkTextToSim.IsChecked = Settings.Default.ShowSimText;
         }
 
         #region SimConnect
@@ -278,16 +279,12 @@ namespace BushDiversTracker
             }
 
             if (e != null) 
-            {
-                Settings.Default.Save();
                 _simConnect?.OpenConnection();
-            }
         }
 
         private void rdoUnitType_Checked(object sender, RoutedEventArgs e)
         {
-            Properties.Settings.Default.UseMetric = rdoUnitMetric.IsChecked == true;
-            Properties.Settings.Default.Save();
+            Settings.Default.UseMetric = rdoUnitMetric.IsChecked == true;
 
             UpdateDispatchWeight();
         }
@@ -305,10 +302,9 @@ namespace BushDiversTracker
             }
 
             if (chkAutoStart.IsEnabled)
-            {
                 Settings.Default.AutoStart = chkAutoStart.IsChecked == true;
-                Settings.Default.Save();
-            }
+
+            Settings.Default.Save();
 
             if (_tracker.State > TrackerState.HasDispatch)
             {
@@ -410,10 +406,7 @@ namespace BushDiversTracker
             }
 
             if (txtKey.Password != Properties.Settings.Default.Key)
-            {
-                Properties.Settings.Default.Key = txtKey.Password;
-                Properties.Settings.Default.Save();
-            }
+                Settings.Default.Key = txtKey.Password;
 
             lblFetch.Visibility = Visibility.Visible;
             // make api request to get bookings/dispatch
@@ -504,6 +497,12 @@ namespace BushDiversTracker
         private void chkQuickstart_Checked(object sender, RoutedEventArgs e)
         {
             _tracker.AllowEngineHotstart = chkQuickstart.IsChecked == true;
+        }
+
+        private void chkSimText_Checked(object sender, RoutedEventArgs e)
+        {
+            _simConnect.SendSimText = chkTextToSim.IsChecked == true;
+            Settings.Default.ShowSimText = chkTextToSim.IsChecked == true;
         }
     }
 }

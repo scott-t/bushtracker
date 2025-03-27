@@ -94,5 +94,17 @@ namespace BushDiversTracker.Properties {
                 this["IsUpdateRequired"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ShowSimText {
+            get {
+                return ((bool)(this["ShowSimText"]));
+            }
+            set {
+                this["ShowSimText"] = value;
+            }
+        }
     }
 }

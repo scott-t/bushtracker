@@ -8,6 +8,7 @@ namespace BushDiversTracker.Services
         Models.Enums.SimVersion? Version { get; }
         bool IsConnected { get; }
         bool IsUserControlled { get; }
+        bool SendSimText { get; set; }
 
         event EventHandler OnSimConnected;
         event EventHandler OnSimDisconnected;

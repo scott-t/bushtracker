@@ -15,7 +15,7 @@
         </Grid.ColumnDefinitions>
         <PasswordBox x:Name="txtKey" HorizontalAlignment="Left" Padding="5" Margin="132,31,0,0" Password="" VerticalAlignment="Top" Width="610" Height="28"/>
         <Label x:Name="label" Content="API Key:" HorizontalAlignment="Left" Margin="132,2,0,0" VerticalAlignment="Top" Height="26" Width="59"/>
-        <Button x:Name="btnFetchBookings" Click="btnFetchBookings_Click"  Content="Fetch Dispatch" Padding="5" Margin="10,123,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99"/>
+        <Button x:Name="btnFetchBookings" Click="btnFetchBookings_Click"  Content="Fetch Dispatch" Padding="5" Margin="10,140,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99"/>
         <StatusBar Margin="0,451,0,0" Height="33" VerticalAlignment="Top">
             <StatusBarItem HorizontalAlignment="Left">
                 <TextBlock x:Name="lblStatusText" Background="#D1D5DB" Foreground="#374151" Padding="5 3" FontSize="11" Text="Ok" />
@@ -79,7 +79,7 @@
                 </ContextMenu>
             </Button.ContextMenu>
         </Button>
-        <Label x:Name="lblFetch" Content="fetching..." HorizontalAlignment="Left" Margin="10,147,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="53"/>
+        <Label x:Name="lblFetch" Content="fetching..." HorizontalAlignment="Left" Margin="10,164,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="53"/>
         <Button x:Name="btnSubmit" Click="btnSubmit_Click" IsEnabled="False" Content="Submit Pirep" Padding="5" Margin="10,324,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99"/>
         <Label x:Name="lblStart" Content="checking info..." HorizontalAlignment="Left" Margin="9,265,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="99"/>
         <Label x:Name="lblVersion" Content="" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" Height="26" Width="50" RenderTransformOrigin="0.46,0.117" FontSize="8"/>
@@ -95,5 +95,6 @@
         <Label x:Name="lblFlightStatus" Content="..." HorizontalAlignment="Left" Margin="10,299,0,0" VerticalAlignment="Top" FontSize="10" Height="22" Width="99"/>
         <Label x:Name="lblTrackerStatus" Content="..." HorizontalAlignment="Left" Margin="10,281,0,0" VerticalAlignment="Top" FontSize="10" Height="22" Width="99"/>
         <CheckBox x:Name="chkQuickstart" Content="Allow running engine" Margin="10,428,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="chkQuickstart_Checked" Unchecked="chkQuickstart_Checked" ToolTip="When checked, BushTracker will permit tracking start with engine already running.&#x0a;&#x0a;We reserve the right to make a frowny face and deduct imaginary internet points."/>
+        <CheckBox x:Name="chkTextToSim" Content="Send text to sim" Margin="10,120,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="chkSimText_Checked" Unchecked="chkSimText_Checked" ToolTip="When checked, BushTracker will automatically attempt to start tracking your flight"/>
     </Grid>
 </Window>
