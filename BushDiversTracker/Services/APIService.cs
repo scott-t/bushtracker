@@ -1,10 +1,13 @@
 ﻿using BushDiversTracker.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Net.WebSockets;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace BushDiversTracker.Services
@@ -17,12 +20,82 @@ namespace BushDiversTracker.Services
         protected readonly string baseUrl = System.Diagnostics.Debugger.IsAttached ? "http://localhost/api" : "https://fly.bushdivers.com/api";
 #endif
         HttpClient _http = new HttpClient();
+        ClientWebSocket _ws = null;
 
         public APIService()
         {
             _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             var thisAssembly = System.Windows.Application.ResourceAssembly.GetName();
             _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(thisAssembly.Name, thisAssembly.Version.ToString()));
+
+            Task.Run(ConnectWebsocket);
+        }
+
+        private async Task ConnectWebsocket()
+        {
+            AddAuthHeaders();
+            if (Properties.Settings.Default.Key != null)
+            {
+                try
+                {
+                    var res = await _http.GetAsync($"{baseUrl}/tracker/ws");
+                    if (res.IsSuccessStatusCode)
+                    {
+                        var config = await res.Content.ReadFromJsonAsync<WssEndpoint>();
+                        var ws = new ClientWebSocket();
+                        Uri uri = new($"{config.Scheme.Replace("http", "ws")}://{config.Host}:{config.Port}/app/{config.Key}");
+                        await ws.ConnectAsync(uri, System.Threading.CancellationToken.None);
+
+                        await DestroySocket();
+                        
+                        _ws = ws;
+                        _ = Task.Run(async () =>
+                        {
+                            var buffer = new byte[4096];
+                            var overflow = Array.Empty<byte>();
+                            while (true)
+                            {
+                                var res = await ws.ReceiveAsync(buffer, System.Threading.CancellationToken.None);
+
+                                if (res.MessageType == WebSocketMessageType.Close)
+                                    break;
+
+                                if (!res.EndOfMessage || overflow.Length > 0)
+                                {
+                                    Array.Resize(ref overflow, overflow.Length + res.Count);
+                                    Array.Copy(buffer, 0, overflow, overflow.Length - res.Count, res.Count);
+                                    if (!res.EndOfMessage)
+                                        continue;
+                                }
+
+                                var str = Encoding.UTF8.GetString(overflow.Length > 0 ? overflow : buffer, 0, overflow.Length > 0 ? overflow.Length : res.Count);
+                                if (overflow.Length > 0)
+                                    overflow = [];
+
+                                Console.WriteLine(str);
+                            }
+                        });
+
+                        _ws.HttpResponseHeaders.
+                        
+                    }
+                }
+                catch (Exception ex)
+                {
+                    HelperService.WriteToLog($"Websocket connection: {ex.Message}");
+                }
+                
+            }
+        }
+
+        private async Task DestroySocket()
+        {
+            if (_ws != null)
+            {
+                await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, null, System.Threading.CancellationToken.None);
+                _ws.Dispose();
+                _ws = null;
+            }
         }
 
         /// <summary>
@@ -57,6 +130,9 @@ namespace BushDiversTracker.Services
         {
             // First 'dispatch' call should update auth details
             AddAuthHeaders();
+
+            if (_ws == null || _ws.State != WebSocketState.Open)
+                _ = Task.Run(ConnectWebsocket);
 
             HttpResponseMessage res = await _http.GetAsync($"{baseUrl}/dispatch");
             if (res.StatusCode == HttpStatusCode.OK)
