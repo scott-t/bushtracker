@@ -87,13 +87,6 @@ namespace BushDiversTracker
 
             btnConnect_SetSim(Settings.Default.SimType != "XP" ? mnuSetSimMSFS : mnuSetSimXP, null);
 
-            if (_simConnect != null)
-            {
-                _simConnect.OnSimConnected += SimConnect_OnSimConnected;
-                _simConnect.OnSimDisconnected += SimConnect_OnSimDisconnected;
-                _simConnect.OnSimDataReceived += SimConnect_OnSimDataReceived;
-            }
-
             _tracker = new TrackerService(this, _simConnect, _api);
             _tracker.OnTrackerStateChanged += Tracker_OnStateChange;
             _tracker.OnFlightStatusChanged += (sender, status) => lblFlightStatus.Content = status.ToString();
@@ -112,17 +105,23 @@ namespace BushDiversTracker
 
         private void SimConnect_OnSimConnected(object sender, EventArgs e)
         {
-            elConnection.Fill = Brushes.Green;
-            elConnection.Stroke = Brushes.Green;
-            btnConnect.IsEnabled = false;
-            SetStatusMessage("Connected");
+            if (sender == _simConnect)
+            {
+                elConnection.Fill = Brushes.Green;
+                elConnection.Stroke = Brushes.Green;
+                btnConnect.IsEnabled = false;
+                SetStatusMessage("Connected");
+            }
         }
 
         private void SimConnect_OnSimDisconnected(object sender, EventArgs e)
         {
-            elConnection.Fill = Brushes.Red;
-            elConnection.Stroke = Brushes.Red;
-            btnConnect.IsEnabled = true;
+            if (sender == _simConnect)
+            {
+                elConnection.Fill = Brushes.Red;
+                elConnection.Stroke = Brushes.Red;
+                btnConnect.IsEnabled = true;
+            }
         }
 
         private void SimConnect_OnSimDataReceived(object sender, SimData data)
@@ -271,12 +270,16 @@ namespace BushDiversTracker
             }
             else
             {
-                _simConnect = null;
+                _simConnect = new SimServiceXPlane(this);
                 Settings.Default.SimType = "XP";
                 lblConnectStatus.Content = "XPlane Connection Status:";
                 mnuSetSimMSFS.IsChecked = false;
                 mnuSetSimXP.IsChecked = true;
             }
+
+            _simConnect.OnSimConnected += SimConnect_OnSimConnected;
+            _simConnect.OnSimDisconnected += SimConnect_OnSimDisconnected;
+            _simConnect.OnSimDataReceived += SimConnect_OnSimDataReceived;
 
             if (e != null) 
                 _simConnect?.OpenConnection();
