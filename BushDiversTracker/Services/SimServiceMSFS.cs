@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using System.Windows;
+using System.Linq;
 
 namespace BushDiversTracker.Services
 {
@@ -16,6 +17,7 @@ namespace BushDiversTracker.Services
         public event EventHandler OnSimConnected;
         public event EventHandler OnSimDisconnected;
         public event EventHandler<SimData> OnSimDataReceived;
+        public event EventHandler<SimSettingsData> OnFlightSettingsReceived;
         public event EventHandler<SimLandingData> OnLandingDataReceived;
 
         private DispatcherTimer timer;
@@ -53,22 +55,20 @@ namespace BushDiversTracker.Services
         private enum DEFINITIONS
         {
             DataStruct,
-            LandingStruct
+            LandingStruct,
+            FlightSettingsStruct,
+
+            SetSlew
+
         }
 
         private enum DAT_REQUESTS
         {
             SIM_MAIN_DATA,
             LANDING_DATA,
-        }
+            FLIGHT_SETTINGS_DATA,
 
-        // items to set in sim
-        private enum SET_DATA
-        {
-            ATC_ID
-            // TODO: Fuel
-            //LEFT_FUEL,
-            //RIGHT_FUEL
+            SET_SLEW
         }
 
         // TODO: for events
@@ -136,7 +136,17 @@ namespace BushDiversTracker.Services
                 simConnect.OnRecvException += new SimConnect.RecvExceptionEventHandler(simconnect_OnRecvException);
 
                 // define a data structure
-                simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "Title", (string)null, SIMCONNECT_DATATYPE.STRING256, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "Title", (string)null, SIMCONNECT_DATATYPE.STRING256, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "ATC ID", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "ATC TYPE", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "ATC MODEL", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "UNLIMITED FUEL", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "IS SLEW ACTIVE", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "PAYLOAD STATION COUNT", "Number", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                for (int i = 1; i <= SimSettingsData.MAX_PAYLOAD_STATIONS; i++)
+                    simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, $"PAYLOAD STATION WEIGHT:{i}", "Pounds", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.RegisterDataDefineStruct<SimSettingsData>(DEFINITIONS.FlightSettingsStruct);
+
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "CAMERA STATE", "Enum", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "Plane Latitude", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "Plane Longitude", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
@@ -146,6 +156,7 @@ namespace BushDiversTracker.Services
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "PLANE BANK DEGREES", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "AIRSPEED TRUE", "Knots", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "AIRSPEED INDICATED", "Knots", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "SURFACE RELATIVE GROUND SPEED", "Feet per second", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "VERTICAL SPEED", "Feet per second", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "PLANE HEADING DEGREES MAGNETIC", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "PLANE HEADING DEGREES TRUE", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
@@ -154,35 +165,16 @@ namespace BushDiversTracker.Services
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "ENG COMBUSTION:2", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "ENG COMBUSTION:3", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "ENG COMBUSTION:4", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "MAX RATED ENGINE RPM", "Rpm", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "GENERAL ENG MAX REACHED RPM", "Rpm", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "ZULU TIME", "seconds", SIMCONNECT_DATATYPE.INT32, 1E+09f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "LOCAL TIME", "seconds", SIMCONNECT_DATATYPE.INT32, 1E+09f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "SIM ON GROUND", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "SURFACE TYPE", "Enum", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "ATC ID", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "ATC TYPE", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "FUEL TOTAL QUANTITY", "Gallons", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "FUELSYSTEM TANK CAPACITY:1", "Gallons", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED); // NEW FUEL SYSTEM simvar borked in MSFS2024, use this to test
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "UNUSABLE FUEL TOTAL QUANTITY", "Gallons", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "OVERSPEED WARNING", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "UNLIMITED FUEL", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "PAYLOAD STATION COUNT", "Number", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "PAYLOAD STATION WEIGHT:1", "Pounds", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "MAX G FORCE", "Gforce", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "MIN G FORCE", "Gforce", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                //simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "GENERAL ENG DAMAGE PERCENT", "Percent", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                //simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "FLAP DAMAGE BY SPEED", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                //simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GEAR DAMAGE BY SPEED", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                //simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "FLAP SPEED EXCEEDED", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                //simConnect.AddToDataDefinition(DEFINITIONS.Struct1, "GEAR SPEED EXCEEDED", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                //simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "ENG MANIFOLD PRESSURE", "inHG", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "ENG FUEL FLOW GPH", "Gallons per hour", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "ATC MODEL", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                simConnect.AddToDataDefinition(DEFINITIONS.DataStruct, "TOTAL WEIGHT", "Pounds", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
-                //simConnect.AddToDataDefinition(SET_DATA.RIGHT_FUEL, "FUEL TANK RIGHT MAIN QUANTITY", "Gallons", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
 
-                // IMPORTANT: register it with the simconnect managed wrapper marshaller
                 simConnect.RegisterDataDefineStruct<SimData>(DEFINITIONS.DataStruct);
 
                 simConnect.AddToDataDefinition(DEFINITIONS.LandingStruct, "PLANE TOUCHDOWN BANK DEGREES", "Degrees", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
@@ -198,7 +190,10 @@ namespace BushDiversTracker.Services
                 simConnect.OnRecvSimobjectDataBytype += new SimConnect.RecvSimobjectDataBytypeEventHandler(simConnect_OnRecvSimobjectDataBytype);
 
                 simConnect.RequestDataOnSimObject(DAT_REQUESTS.LANDING_DATA, DEFINITIONS.LandingStruct, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD.SECOND, SIMCONNECT_DATA_REQUEST_FLAG.CHANGED, 0, 0, 0);
+                simConnect.RequestDataOnSimObject(DAT_REQUESTS.FLIGHT_SETTINGS_DATA, DEFINITIONS.FlightSettingsStruct, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD.SECOND, SIMCONNECT_DATA_REQUEST_FLAG.CHANGED, 0, 0, 0);
                 simConnect.OnRecvSimobjectData += new SimConnect.RecvSimobjectDataEventHandler(simConnect_OnRecvSimobjectData);
+
+                simConnect.AddToDataDefinition(DEFINITIONS.SetSlew, "IS SLEW ALLOWED", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
 
             }
             catch (COMException ex)
@@ -306,6 +301,12 @@ namespace BushDiversTracker.Services
                 SimLandingData data1 = (SimLandingData)data.dwData[0];
                 OnLandingDataReceived?.Invoke(this, data1);
             }
+            else if (data.dwRequestID == (uint)DAT_REQUESTS.FLIGHT_SETTINGS_DATA)
+            {
+                SimSettingsData data1 = (SimSettingsData)data.dwData[0];
+                data1.total_weight = data1.payload_station_weight.Take(data1.payload_station_count).Sum();
+                OnFlightSettingsReceived?.Invoke(this, data1);
+            }
         }
 
         /// <summary>
@@ -345,7 +346,7 @@ namespace BushDiversTracker.Services
             }
             catch (COMException ex)
             {
-                HelperService.WriteToLog($"Issue connecting to sim: {ex.Message}");
+                //HelperService.WriteToLog($"Issue connecting to sim: {ex.Message}");
                 _mainWindow.SetStatusMessage($"Issue connecting to sim. Is sim running?", MainWindow.MessageState.Error);
                 OnSimDisconnected?.Invoke(this, EventArgs.Empty);
             }
@@ -369,6 +370,27 @@ namespace BushDiversTracker.Services
             timer?.Stop();
 
             OnSimDisconnected?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Allow or block slew mode
+        /// </summary>
+        /// <param name="strictMode"></param>
+        public void SetStrictMode(bool strictMode)
+        {
+            if (simConnect == null)
+                return;
+
+            try
+            {
+                // Set slew mode
+                bool isSlewAllowed = !strictMode;// ? 0 : 1;
+                simConnect.SetDataOnSimObject(DEFINITIONS.SetSlew, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, isSlewAllowed);
+            }
+            catch (COMException ex)
+            {
+                HelperService.WriteToLog($"Issue setting strict mode: {ex.Message}");
+            }
         }
 
         /// <summary>

@@ -50,15 +50,11 @@ namespace BushDiversTracker
             grpFlight.Visibility = Visibility.Hidden;
             lblDeadHead.Visibility = Visibility.Hidden;
 
-            txtPirep.Visibility = Visibility.Hidden;
-            txtDepLat.Visibility = Visibility.Hidden;
-            txtDepLon.Visibility = Visibility.Hidden;
-            txtArrLat.Visibility = Visibility.Hidden;
-            txtArrLon.Visibility = Visibility.Hidden;
             lblDepartureError.Visibility = Visibility.Hidden;
             lblCargoError.Visibility = Visibility.Hidden;
             lblAircraftError.Visibility = Visibility.Hidden;
             lblFuelError.Visibility = Visibility.Hidden;
+            lblSettingsError.Visibility = Visibility.Hidden;
 
             //btnStop.Visibility = Visibility.Hidden;
             lblFetch.Visibility = Visibility.Hidden;
@@ -96,7 +92,7 @@ namespace BushDiversTracker
 
             _tracker = new TrackerService(this, _simConnect, _api);
             _tracker.OnTrackerStateChanged += Tracker_OnStateChange;
-            _tracker.OnFlightStatusChanged += (sender, status) => lblFlightStatus.Content = status.ToString();
+            _tracker.OnFlightStatusChanged += Tracker_OnFlightStatusChange;
             _tracker.OnDispatchError += Tracker_OnDispatchError;
             _tracker.OnSetDispatch += Tracker_SetDispatchData;
             _tracker.OnStatusMessage += (sender, message) => SetStatusMessage(message.Message, message.State);
@@ -128,11 +124,17 @@ namespace BushDiversTracker
         private void SimConnect_OnSimDataReceived(object sender, SimData data)
         {
             if (_tracker?.Dispatch != null)
-                txtSimFuel.Text = FormatFuel(new decimal(data.fuel_qty), _tracker.Dispatch.FuelType);
+            {
+                txtSimFuel.Content = FormatFuel(new decimal(data.fuel_qty), _tracker.Dispatch.FuelType);
+                txtSimPayload.Content = FormatWeight(new decimal(_tracker.SimFlightSettings.total_weight));
+            }
             else
-                txtSimFuel.Text = "";
-        }
+            {
+                txtSimFuel.Content = "";
+                txtSimPayload.Content = "";
+            }
 
+        }
 
         #endregion
 
@@ -193,12 +195,21 @@ namespace BushDiversTracker
             HelperService.WriteToLog($"Tracker state changed to {state}");
         }
 
+        private void Tracker_OnFlightStatusChange(object sender, PirepStatusType status)
+        {
+            lblFlightStatus.Content = status.ToString();
+            btnSubmit.IsEnabled =
+                (Settings.Default.AutoStart && status == PirepStatusType.LANDED) 
+                || status == PirepStatusType.ARRIVED;
+        }
+
         private void Tracker_OnDispatchError(object sender, TrackingStartErrorArgs status)
         {
             lblAircraftError.Visibility = status.AircraftError ? Visibility.Visible : Visibility.Hidden;
             lblCargoError.Visibility = status.CargoError ? Visibility.Visible : Visibility.Hidden;
             lblDepartureError.Visibility = status.DepartureError ? Visibility.Visible : Visibility.Hidden;
             lblFuelError.Visibility = status.FuelError ? Visibility.Visible : Visibility.Hidden;
+            lblSettingsError.Visibility = status.GameSettingsError ? Visibility.Visible : Visibility.Hidden;
         }
 
         #endregion
@@ -213,6 +224,14 @@ namespace BushDiversTracker
                 fuelString += " | " + (isMetric ? HelperService.LbsToKG(HelperService.GalToLbs(fuel, fuelType.Value)).ToString("0.## kg") : HelperService.GalToLbs(fuel, fuelType.Value).ToString("0.## lbs"));
 
             return fuelString;
+        }
+
+        private string FormatWeight(decimal weight)
+        {
+            bool isMetric = rdoUnitMetric.IsChecked == true;
+            if (weight < 0)
+                return "N/A";
+            return isMetric ? weight.ToString("0.# kg") : weight.ToString("0 lbs");
         }
 
         private async void btnFetchBookings_Click(object sender, RoutedEventArgs e)
@@ -350,18 +369,13 @@ namespace BushDiversTracker
             }
 
             grpFlight.Visibility = Visibility.Visible;
-            txtDeparture.Text = dispatch.Departure.ToString();
-            txtArrival.Text = dispatch.Arrival.ToString();
-            txtAircraft.Text = dispatch.Aircraft.ToString();
-            txtAircraftType.Text = dispatch.AircraftType.ToString();
-            txtRegistration.Text = dispatch.Registration.ToString();
-            txtPirep.Text = dispatch.Id.ToString();
-            txtDepLat.Text = dispatch.DepLat.ToString();
-            txtDepLon.Text = dispatch.DepLon.ToString();
-            txtArrLat.Text = dispatch.ArrLat.ToString();
-            txtArrLon.Text = dispatch.ArrLon.ToString();
-            string tourText  = dispatch.Tour != null ? dispatch.Tour.ToString() : "";
-            txtTour.Text = tourText;
+            txtDeparture.Content = dispatch.Departure;
+            txtArrival.Content = dispatch.Arrival;
+            txtAircraft.Content = $"{dispatch.Aircraft} / {dispatch.AircraftType}";
+            txtRegistration.Content = dispatch.Registration;
+
+            string tourText  = dispatch.Tour ?? "";
+            txtTour.Content = tourText;
             txtKey.IsEnabled = false;
             UpdateDispatchWeight();
         }
@@ -376,19 +390,10 @@ namespace BushDiversTracker
 
             bool isMetric = rdoUnitMetric.IsChecked == true;
 
-            txtFuel.Text = FormatFuel(_tracker.Dispatch.PlannedFuel, _tracker.Dispatch.FuelType);
-            txtCargoWeight.Text = isMetric ? HelperService.LbsToKG(_tracker.Dispatch.CargoWeight).ToString("0.# kg") : _tracker.Dispatch.CargoWeight.ToString("0 lbs");
-            txtPaxCount.Text = _tracker.Dispatch.PassengerCount.ToString();
-            if (_tracker.Dispatch.PassengerCount > 0)
-            {
-                decimal paxWeight = _tracker.Dispatch.PassengerCount * 170;
-                var total = _tracker.Dispatch.CargoWeight + paxWeight;
-                txtPayloadTotal.Text = isMetric ? HelperService.LbsToKG(total).ToString("0.# kg") : total.ToString("0 lbs");
-            }
-            else
-            {
-                txtPayloadTotal.Text = isMetric ? HelperService.LbsToKG(_tracker.Dispatch.CargoWeight).ToString("0.# kg") : _tracker.Dispatch.CargoWeight.ToString("0 lbs");
-            }
+            txtFuel.Content = FormatFuel(_tracker.Dispatch.PlannedFuel, _tracker.Dispatch.FuelType);
+            txtCargoWeight.Content = FormatWeight(_tracker.Dispatch.CargoWeight);
+            txtPaxCount.Content = _tracker.Dispatch.PassengerCount.ToString();
+            txtPayloadTotal.Content = FormatWeight(_tracker.Dispatch.TotalPayload);
         }
        
 

@@ -31,6 +31,8 @@ namespace BushDiversTracker.Models
         public decimal CargoWeight { get; set; }
         [JsonPropertyName("passenger_count")]
         public int PassengerCount { get; set; }
+        [JsonPropertyName("total_payload")]
+        public decimal TotalPayload { get; set; }
         [JsonPropertyName("id")]
         public string Id { get; set; }
         [JsonPropertyName("is_empty")]
