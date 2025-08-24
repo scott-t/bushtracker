@@ -9,9 +9,9 @@
     <Product>Bush Tracker</Product>
     <Authors>Bush Divers</Authors>
     <StartupObject></StartupObject>
-    <Version>1.1.0.1</Version>
-    <AssemblyVersion>1.1.0.1</AssemblyVersion>
-    <FileVersion>1.1.0.1</FileVersion>
+    <Version>1.1.1.0</Version>
+    <AssemblyVersion>1.1.1.0</AssemblyVersion>
+    <FileVersion>1.1.1.0</FileVersion>
     <UseWindowsForms>True</UseWindowsForms>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>Bush Tracker.snk</AssemblyOriginatorKeyFile>
@@ -44,7 +44,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="$(MSFS_SDK)\SimConnect SDK\lib\SimConnect.dll">
+    <Content Condition="'$(MSFS_SDK)'!=''" Include="$(MSFS_SDK)\SimConnect SDK\lib\SimConnect.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Condition="'$(MSFS_SDK)'==''" Include="$(MSFS2024_SDK)\SimConnect SDK\lib\SimConnect.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -55,7 +58,8 @@
 
   <ItemGroup>
     <Reference Include="Microsoft.FlightSimulator.SimConnect">
-      <HintPath>$(MSFS_SDK)\SimConnect SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll</HintPath>
+      <HintPath Condition="'$(MSFS_SDK)'!=''">$(MSFS_SDK)\SimConnect SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll</HintPath>
+      <HintPath Condition="'$(MSFS_SDK)'==''">$(MSFS2024_SDK)\SimConnect SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll</HintPath>
       <Private>true</Private>
     </Reference>
   </ItemGroup>
