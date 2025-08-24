@@ -141,7 +141,7 @@ namespace BushDiversTracker.Services
         /// <returns></returns>
         protected async Task<bool> CheckAndDivert()
         {
-            double distance = HelperService.CalculateDistance(Convert.ToDouble(dispatchData.ArrLat), Convert.ToDouble(dispatchData.ArrLon), lastSimData.latitude, lastSimData.longitude, true);
+            double distance = HelperService.CalculateDistance((double)dispatchData.ArrLat, (double)dispatchData.ArrLon, lastSimData.latitude, lastSimData.longitude, true);
             if (distance <= 2)
                 return true;
 
@@ -186,7 +186,7 @@ namespace BushDiversTracker.Services
                     && !(AllowEngineHotstart && state == TrackerState.InFlight && FlightStatus == PirepStatusType.LANDED)))
                 return false;
 
-            if (AllowEngineHotstart && double.Abs(lastSimData.surface_rel_groundspeed) > 10)
+            if (AllowEngineHotstart && Math.Abs(lastSimData.surface_rel_groundspeed) > 10)
             {
                 _mainWindow.SetStatusMessage("Aircraft not stationary", MainWindow.MessageState.Error);
                 return false;
@@ -195,7 +195,7 @@ namespace BushDiversTracker.Services
             // Check we're at a landing airport
             if (!await CheckAndDivert())
             {
-                MessageBox.Show("Unable to find landing airport.\n\nPlease resume flying and land within 2NM of an airport", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(_mainWindow, "Unable to find landing airport.\n\nPlease resume flying and land within 2NM of an airport", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
                 _mainWindow.SetStatusMessage("No airport within 2NM", MainWindow.MessageState.Error);
                 return false;
             }
@@ -238,7 +238,7 @@ namespace BushDiversTracker.Services
             }
             else
             {
-                MessageBox.Show("Pirep Not Submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(_mainWindow, "Pirep Not Submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
             return res;
@@ -292,12 +292,12 @@ namespace BushDiversTracker.Services
 
             // If in flight, and static settings (slew, unlimited fuel, etc) have changed, or if our fuel qty has increased by more than 1% (for rounding), abort
             if (state >= TrackerState.InFlight 
-                && (bFlightSettingsInvalidated || data.fuel_qty > double.Ceiling(lastSimData.fuel_qty * 1.01)))
+                && (bFlightSettingsInvalidated || data.fuel_qty > Math.Ceiling(lastSimData.fuel_qty * 1.01)))
             {
                 Task<bool> task = _api.CancelTrackingAsync();
 
                 SetTrackerState(TrackerState.None);
-                MessageBox.Show("It looks like you have abandoned your flight, tracking will now stop and your progress cancelled.\nYour aircraft or game settings has been modified.", "Bush Divers", MessageBoxButton.OK);
+                MessageBox.Show(_mainWindow, "It looks like you have abandoned your flight, tracking will now stop and your progress cancelled.\nYour aircraft or game settings has been modified.", "Bush Divers", MessageBoxButton.OK);
 
                 await task;
                 if (task.IsCompletedSuccessfully && task.Result)
@@ -340,7 +340,7 @@ namespace BushDiversTracker.Services
             else if (state == TrackerState.ReadyToStart)
             {
                 // Once engines started, set block time and start location
-                if (data.EnginesRunning && Convert.ToBoolean(data.on_ground))
+            if (data.EnginesRunning && data.on_ground != 0)
                 {
                     startTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
                     startFuelQty = data.fuel_qty;
@@ -352,7 +352,8 @@ namespace BushDiversTracker.Services
             }
             else if (state == TrackerState.InFlight)
             {
-                bool onGround = Convert.ToBoolean(data.on_ground);
+                bool onGround = data.on_ground != 0;
+            
                 // check for take off
                 if (FlightStatus == PirepStatusType.BOARDING && !onGround && data.plane_altitude > 200) // arbitrary number to avoid advancing state on bouncy water takeoff
                 {
@@ -370,16 +371,7 @@ namespace BushDiversTracker.Services
                 }
                 else if (FlightStatus == PirepStatusType.CRUISE)
                 {
-                    if (onGround && double.Abs(data.surface_rel_groundspeed) < 40)
-                    {
-                        FlightStatus = PirepStatusType.LANDED;
-                        _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.LANDED });
-
-                        _mainWindow.SetStatusMessage("Landed");
-                        _sim.SendTextToSim("Bush Tracker Status: Landed");
-                    }
-
-                    if (onGround && lastSimData.on_ground != 0 && data.surface_type == 2) // landed on water
+                    if (onGround && lastSimData.on_ground == 0 && data.surface_type == 2) // landed on water
                     {
                         var rate = -(data.vspeed + lastSimData.vspeed) * 60.0 / 2.0;    // f/s to f/m... api needs f/s on the pirep progress log
 
@@ -400,6 +392,14 @@ namespace BushDiversTracker.Services
                         }
                     }
 
+                    if (onGround && double.Abs(data.surface_rel_groundspeed) < 40)
+                    {
+                        FlightStatus = PirepStatusType.LANDED;
+                        _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.LANDED });
+
+                        _mainWindow.SetStatusMessage("Landed");
+                        _sim.SendTextToSim("Bush Tracker Status: Landed");
+                    }
                 }
                 else if (FlightStatus == PirepStatusType.LANDED)
                 {
@@ -409,7 +409,7 @@ namespace BushDiversTracker.Services
                         _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.CRUISE });
                         _mainWindow.SetStatusMessage("Cruise");
                     }
-                    else if (!data.EnginesRunning && double.Abs(data.surface_rel_groundspeed) < 15)
+            else if (!data.EnginesRunning && Math.Abs(data.surface_rel_groundspeed) < 15)
                     {
                         FlightStatus = PirepStatusType.ARRIVED;
                         SetTrackerState(TrackerState.Shutdown);
@@ -463,7 +463,7 @@ namespace BushDiversTracker.Services
                             Task<bool> task = _api.CancelTrackingAsync();
 
                             SetTrackerState(TrackerState.None);
-                            MessageBox.Show("It looks like you have abandoned your flight, tracking will now stop and your progress cancelled." + "\n" + "You can start your flight again by returning to the departure location", "Bush Divers", MessageBoxButton.OK);
+                            MessageBox.Show(_mainWindow, "It looks like you have abandoned your flight, tracking will now stop and your progress cancelled." + "\n" + "You can start your flight again by returning to the departure location", "Bush Divers", MessageBoxButton.OK);
 
                             await task;
                             if (task.IsCompletedSuccessfully && task.Result)
@@ -527,7 +527,7 @@ namespace BushDiversTracker.Services
                     HelperService.WriteToLog("Flight settings changed: Slew mode enabled");
             }
 
-            if (dispatchData != null && !WeightValid(data.total_weight, decimal.ToDouble(dispatchData.TotalPayload)))
+            if (dispatchData != null && !WeightValid(data.total_weight, (double)dispatchData.TotalPayload))
             {
                 bFlightSettingsInvalidated = true;
                 if (simFlightSettings?.total_weight != data.total_weight)
@@ -568,20 +568,20 @@ namespace BushDiversTracker.Services
             //}
 
             // check fuel qty matches planned fuel
-            var tolerance = decimal.ToDouble(dispatchData.PlannedFuel) * .01;
+            var tolerance = (double)dispatchData.PlannedFuel * 0.01;
             if (tolerance < 5.0)
                 tolerance = 5;
-            var maxVal = decimal.ToDouble(dispatchData.PlannedFuel) + tolerance;
-            var minVal = decimal.ToDouble(dispatchData.PlannedFuel) - tolerance;
+            var maxVal = (double)dispatchData.PlannedFuel + tolerance;
+            var minVal = (double)dispatchData.PlannedFuel - tolerance;
             if (data.Fuel < minVal || data.Fuel > maxVal)
                 fuelError = true;
 
-            cargoError = !WeightValid(data.FlightSettings.total_weight, decimal.ToDouble(dispatchData.TotalPayload));
+            cargoError = !WeightValid(data.FlightSettings.total_weight, (double)dispatchData.TotalPayload);
 
             bool settingsError = data.FlightSettings.is_unlimited_fuel != 0 || data.FlightSettings.is_slew_mode != 0;
 
             // check current position
-            var distance = HelperService.CalculateDistance(decimal.ToDouble(dispatchData.DepLat), decimal.ToDouble(dispatchData.DepLon), data.CurrentLat, data.CurrentLon, false);
+            var distance = HelperService.CalculateDistance((double)dispatchData.DepLat, (double)dispatchData.DepLon, data.CurrentLat, data.CurrentLon, false);
             if (distance > 2)
                 departureError = true;
 
@@ -617,10 +617,10 @@ namespace BushDiversTracker.Services
                 PirepId = dispatchData.Id,
                 Lat = d.latitude,
                 Lon = d.longitude,
-                Heading = Convert.ToInt32(d.heading_m),
-                Altitude = Convert.ToInt32(d.indicated_altitude),
-                IndicatedSpeed = Convert.ToInt32(d.airspeed_indicated),
-                GroundSpeed = Convert.ToInt32(d.airspeed_true),
+                Heading = (int)d.heading_m,
+                Altitude = (int)d.indicated_altitude,
+                IndicatedSpeed = (int)d.airspeed_indicated,
+                GroundSpeed = (int)d.airspeed_true,
                 FuelFlow = d.fuel_flow,
                 VS = d.vspeed,
                 SimTime = HelperService.SetZuluTime(d.local_time),

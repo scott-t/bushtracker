@@ -194,20 +194,6 @@ namespace BushDiversTracker.Services
             }
         }
 
-        //public async Task<int?> PostGetDistance(object points)
-        //{
-        //    AddHeaders();
-        //    HttpResponseMessage res = await _http.PostAsJsonAsync($"{baseUrl}/tracker/distance", points);
-        //    if (res.StatusCode == HttpStatusCode.OK)
-        //    {
-        //        return await res.Content.ReadFromJsonAsync<int>();
-        //    }
-        //    else
-        //    {
-        //        return null;
-        //    }
-        //}
-
         /// <summary>
         /// Adds default headers to a request
         /// </summary>

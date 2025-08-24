@@ -8,6 +8,16 @@ namespace BushDiversTracker.Services
 {
     class HelperService
     {
+        // Constants for conversion factors
+        private const decimal GALLONS_TO_LITRES = 3.785412m;
+        private const decimal AVGAS_DENSITY_LBS_PER_GALLON = 6.00m;
+        private const decimal JET_FUEL_DENSITY_LBS_PER_GALLON = 6.79m;
+        private const decimal LBS_TO_KG = 0.453592m;
+        private const double NAUTICAL_MILES_EARTH_RADIUS = 3440.1;
+        private const double ALTITUDE_CHANGE_THRESHOLD = 200.0;
+        private const double HEADING_CHANGE_THRESHOLD = 7.0;
+        private const long MAX_LOG_SIZE_BYTES = 512 * 1024; // 512 KB
+
         protected static string BasePath { get; set; }
 
         /// <summary>
@@ -48,9 +58,7 @@ namespace BushDiversTracker.Services
                 {
                     case JsonTokenType.String:
                         var tok = reader.GetString().ToLower();
-                        if (tok == "false" || tok == "0")
-                            return false;
-                        return true;
+                        return !(tok == "false" || tok == "0");
 
                     case JsonTokenType.Number:
                         return reader.GetInt32() != 0;
@@ -97,14 +105,12 @@ namespace BushDiversTracker.Services
             latFrom = DegToRad(latFrom);
             lonFrom = DegToRad(lonFrom);
 
-            double earthRadius = 3440.1;
-
             var thetaLat = latTo - latFrom;
             var thetaLon = lonTo - lonFrom;
 
             var a = Math.Sin(thetaLat / 2) * Math.Sin(thetaLat / 2) + Math.Cos(latFrom) * Math.Cos(latTo) * Math.Sin(thetaLon / 2) * Math.Sin(thetaLon / 2);
             var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-            var d = earthRadius * c;
+            var d = NAUTICAL_MILES_EARTH_RADIUS * c;
 
             return d;
         }
@@ -116,8 +122,7 @@ namespace BushDiversTracker.Services
         /// <returns>double of radian</returns>
         public static double DegToRad(double deg)
         {
-            double rad = (Math.PI / 180) * deg;
-            return rad;
+            return (Math.PI / 180) * deg;
         }
 
         /// <summary>
@@ -127,8 +132,7 @@ namespace BushDiversTracker.Services
         /// <returns>DateTime of zulu</returns>
         public static DateTime SetZuluTime(int zuluTimeInSecs)
         {
-
-            return DateTime.Today.Add(TimeSpan.FromSeconds((double)zuluTimeInSecs));
+            return DateTime.Today.Add(TimeSpan.FromSeconds(zuluTimeInSecs));
         }
 
         /// <summary>
@@ -139,10 +143,7 @@ namespace BushDiversTracker.Services
         /// <returns>true if change is within zone</returns>
         public static bool CheckForAltChange(double currentAlt, double newAlt)
         {
-            var increasedAlt = newAlt >= (currentAlt + 200) ? true : false;
-            var decreasedAlt = newAlt <= (currentAlt - 200) ? true : false;
-            if (increasedAlt || decreasedAlt) return true;
-            else return false;
+            return Math.Abs(newAlt - currentAlt) >= ALTITUDE_CHANGE_THRESHOLD;
         }
 
         /// <summary>
@@ -153,16 +154,13 @@ namespace BushDiversTracker.Services
         /// <returns>true if heading change is 7 degrees or more</returns>
         public static bool CheckForHeadingChange(double currentHdg, double newHdg)
         {
-            var left = currentHdg - newHdg;
-            var right = newHdg - currentHdg;
+            var delta = Math.Abs(newHdg - currentHdg);
 
-            if (left < 0) left += 360;
-            if (right < 0) right += 360;
+            // Find the shortest angular distance
+            if (delta > 180)
+                delta = 360 - delta;
 
-            var headingChange = left < right ? left : right;
-
-            if (headingChange >= 7) return true;
-            else return false;
+            return delta >= HEADING_CHANGE_THRESHOLD;
         }
 
         /// <summary>
@@ -188,7 +186,7 @@ namespace BushDiversTracker.Services
         public static void RotateLog()
         {
             FileInfo f = new("log.txt");
-            if (f.Exists && f.Length > 512 * 1024 * 1024)
+            if (f.Exists && f.Length > MAX_LOG_SIZE_BYTES)
             {
                 try
                 {
@@ -221,7 +219,7 @@ namespace BushDiversTracker.Services
         /// <returns>Litres</returns>
         public static decimal GalToLitre(decimal gal)
         {
-            return gal * new decimal(3.785412);
+            return gal * GALLONS_TO_LITRES;
         }
 
         /// <summary>
@@ -232,12 +230,12 @@ namespace BushDiversTracker.Services
         /// <returns></returns>
         public static decimal GalToLbs(decimal gal, FuelType fuel)
         {
-            if (fuel == FuelType.AVGAS)
-                return gal * new decimal(6.00);
-            else if (fuel == FuelType.JET)
-                return gal * new decimal(6.79);
-            else
-                return new decimal();
+            return fuel switch
+            {
+                FuelType.AVGAS => gal * AVGAS_DENSITY_LBS_PER_GALLON,
+                FuelType.JET => gal * JET_FUEL_DENSITY_LBS_PER_GALLON,
+                _ => 0m
+            };
         }
 
         /// <summary>
@@ -247,7 +245,7 @@ namespace BushDiversTracker.Services
         /// <returns>Kilograms</returns>
         public static decimal LbsToKG(decimal lbs)
         {
-            return lbs * new decimal(0.453592);
+            return lbs * LBS_TO_KG;
         }
 
         /// <summary>

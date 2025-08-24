@@ -245,8 +245,12 @@ namespace BushDiversTracker
             lblSubmitting.Visibility = Visibility.Visible;
             btnSubmit.IsEnabled = false;
             lblErrorText.Visibility = Visibility.Hidden;
-            await _tracker.SubmitFlight();
-
+            bool submitted = await _tracker.SubmitFlight();
+            if (!submitted)
+            {
+                lblSubmitting.Visibility = Visibility.Hidden;
+                btnSubmit.IsEnabled = true;
+            }
         }
 
         private async void btnStop_Click(object sender, RoutedEventArgs e)
