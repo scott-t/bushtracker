@@ -207,7 +207,7 @@ namespace BushDiversTracker.Services
             Pirep pirep = new()
             {
                 PirepId = dispatchData.Id,
-                FuelUsed = startFuelQty - endFuelQty,
+                FuelUsed = startFuelQty - (lastSimData.EnginesRunning ? lastSimData.fuel_qty : endFuelQty),
                 LandingRate = thisLanding.touchdown_velocity,
                 TouchDownLat = thisLanding.touchdown_lat,
                 TouchDownLon = thisLanding.touchdown_lon,
@@ -218,7 +218,7 @@ namespace BushDiversTracker.Services
                 Distance = currentDistance,
                 AircraftUsed = thisSettings.aircraft_name,
                 SimUsed = _sim.Version.Value.ToString(),
-                EngineHotStart = engineHotstart
+                EngineHotStart = engineHotstart || lastSimData.EnginesRunning
             };
 
             bool res = false;
@@ -340,7 +340,7 @@ namespace BushDiversTracker.Services
             else if (state == TrackerState.ReadyToStart)
             {
                 // Once engines started, set block time and start location
-            if (data.EnginesRunning && data.on_ground != 0)
+                if (data.EnginesRunning && data.on_ground != 0)
                 {
                     startTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
                     startFuelQty = data.fuel_qty;
@@ -355,7 +355,7 @@ namespace BushDiversTracker.Services
                 bool onGround = data.on_ground != 0;
             
                 // check for take off
-                if (FlightStatus == PirepStatusType.BOARDING && !onGround && data.plane_altitude > 200) // arbitrary number to avoid advancing state on bouncy water takeoff
+                if (FlightStatus == PirepStatusType.BOARDING && !onGround && data.alt_above_ground > 200) // arbitrary number to avoid advancing state on bouncy water takeoff
                 {
                     FlightStatus = PirepStatusType.DEPARTED;
                     _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.DEPARTED });
@@ -363,7 +363,7 @@ namespace BushDiversTracker.Services
                     _mainWindow.SetStatusMessage("Departed");
                     _sim.SendTextToSim("Bush Tracker Status: Departed - Have a good flight!");
                 }
-                else if (FlightStatus == PirepStatusType.DEPARTED && data.plane_altitude > 1000)
+                else if (FlightStatus == PirepStatusType.DEPARTED && (data.alt_above_ground > 500 || (data.alt_above_ground > 250 && data.vspeed < 3))) // 3fps = 180 fpm
                 {
                     FlightStatus = PirepStatusType.CRUISE;
                     _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.CRUISE });
@@ -409,7 +409,7 @@ namespace BushDiversTracker.Services
                         _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.CRUISE });
                         _mainWindow.SetStatusMessage("Cruise");
                     }
-            else if (!data.EnginesRunning && Math.Abs(data.surface_rel_groundspeed) < 15)
+                    else if (!data.EnginesRunning && Math.Abs(data.surface_rel_groundspeed) < 15)
                     {
                         FlightStatus = PirepStatusType.ARRIVED;
                         SetTrackerState(TrackerState.Shutdown);

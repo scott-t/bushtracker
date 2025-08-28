@@ -17,6 +17,7 @@ namespace BushDiversTracker.Models.NonApi
         public double longitude;
         public double indicated_altitude;
         public double plane_altitude;
+        public double alt_above_ground;
         public double ac_pitch;
         public double ac_bank;
         public double airspeed_true;
