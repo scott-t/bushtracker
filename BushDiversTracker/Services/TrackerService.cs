@@ -652,7 +652,7 @@ namespace BushDiversTracker.Services
             if (tolerance < 5.0)
                 tolerance = 5;
 
-            return weight >= (maxWeight - tolerance) && weight <= (maxWeight + tolerance);
+            return weight >= (maxWeight - tolerance);
         }
     }
 }

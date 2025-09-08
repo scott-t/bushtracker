@@ -9,9 +9,9 @@
     <Product>Bush Tracker</Product>
     <Authors>Bush Divers</Authors>
     <StartupObject></StartupObject>
-    <Version>1.1.1.0</Version>
-    <AssemblyVersion>1.1.1.0</AssemblyVersion>
-    <FileVersion>1.1.1.0</FileVersion>
+    <Version>1.1.1.1</Version>
+    <AssemblyVersion>1.1.1.1</AssemblyVersion>
+    <FileVersion>1.1.1.1</FileVersion>
     <UseWindowsForms>True</UseWindowsForms>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>Bush Tracker.snk</AssemblyOriginatorKeyFile>
