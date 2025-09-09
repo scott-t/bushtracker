@@ -48,8 +48,8 @@
                 <Label x:Name="txtPaxCount" FontStyle="Italic" FontSize="10" Content="Test" Width="92" Height="19" HorizontalAlignment="Left" Padding="0" Canvas.Left="99" Canvas.Top="126" VerticalAlignment="Center"/>
                 <Label x:Name="lblDepartureError" Content="Incorrect location" Foreground="#FFF00808" Width="174" Height="19" HorizontalAlignment="Center" Padding="0" Canvas.Left="18" Canvas.Top="25" VerticalAlignment="Top"/>
                 <Label x:Name="lblCargoError" Content="Payload does not match" Foreground="#FFF00808" Width="165" Height="19" HorizontalAlignment="Left" Padding="0" Canvas.Left="18" Canvas.Top="167" VerticalAlignment="Center"/>
-                <Label x:Name="lblAircraftError" Foreground="#FFF00808" Content="Aircraft does not match" Height="18" Width="126" HorizontalAlignment="Center" Padding="0" Canvas.Left="208" Canvas.Top="25" VerticalAlignment="Top"/>
-                <Label x:Name="lblFuelError" Foreground="#FFF00808" Content="Fuel does not match" Height="20" Width="110" HorizontalAlignment="Center" Padding="0" Canvas.Left="208" Canvas.Top="124" VerticalAlignment="Top"/>
+                <Label x:Name="lblAircraftError" Foreground="#FFF00808" Content="Aircraft does not match" Height="18" Width="158" HorizontalAlignment="Left" Padding="0" Canvas.Left="208" Canvas.Top="25" VerticalAlignment="Center"/>
+                <Label x:Name="lblFuelError" Foreground="#FFF00808" Content="Fuel does not match" Height="20" Width="158" HorizontalAlignment="Left" Padding="0" Canvas.Left="208" Canvas.Top="124" VerticalAlignment="Center"/>
                 <Label x:Name="lblPayloadTotal" Content="Total Payload:" Height="19" Width="82" HorizontalAlignment="Center" Padding="0" Canvas.Left="9" Canvas.Top="92" VerticalAlignment="Top"/>
                 <Label x:Name="txtPayloadTotal" Content="Test" Width="92" Height="19" HorizontalAlignment="Center" Padding="0" Canvas.Left="99" Canvas.Top="92" VerticalAlignment="Center"/>
                 <Label x:Name="lblTour" Content="Tour:" Height="19" Width="36" HorizontalAlignment="Left" Padding="0" Canvas.Left="199" Canvas.Top="150" VerticalAlignment="Center"/>
@@ -58,7 +58,7 @@
                 <Label x:Name="txtSimFuel" FontStyle="Italic" FontSize="10" Content="N/A" Width="234" Height="18" HorizontalAlignment="Center" Padding="0" Canvas.Left="286" Canvas.Top="110" VerticalAlignment="Center"/>
                 <Label x:Name="lblSimPayload" FontStyle="Italic" FontSize="10" Content="Sim Payload:" Height="19" Width="64" Padding="0" Canvas.Left="18" Canvas.Top="150" HorizontalAlignment="Center" VerticalAlignment="Top"/>
                 <Label x:Name="txtSimPayload" FontStyle="Italic" FontSize="10" Content="N/A" Width="92" Height="19" Padding="0" Canvas.Left="99" Canvas.Top="150" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                <Label x:Name="lblSettingsError" Content="Game settings are invalid" Foreground="#FFF00808" Width="165" Height="19" Padding="0" Canvas.Left="199" Canvas.Top="167" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                <Label x:Name="lblSettingsError" Content="Game settings are invalid" Foreground="#FFF00808" Width="167" Height="19" Padding="0" Canvas.Left="199" Canvas.Top="167" HorizontalAlignment="Left" VerticalAlignment="Center"/>
 
             </Canvas>
         </GroupBox>
