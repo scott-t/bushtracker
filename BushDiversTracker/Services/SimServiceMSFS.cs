@@ -144,6 +144,8 @@ namespace BushDiversTracker.Services
                 simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "IS SLEW ACTIVE", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "PAYLOAD STATION COUNT", "Number", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 for (int i = 1; i <= SimSettingsData.MAX_PAYLOAD_STATIONS; i++)
+                    simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, $"PAYLOAD STATION NAME:{i}", (string)null, SIMCONNECT_DATATYPE.STRING256, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                for (int i = 1; i <= SimSettingsData.MAX_PAYLOAD_STATIONS; i++)
                     simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, $"PAYLOAD STATION WEIGHT:{i}", "Pounds", SIMCONNECT_DATATYPE.FLOAT64, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.RegisterDataDefineStruct<SimSettingsData>(DEFINITIONS.FlightSettingsStruct);
 

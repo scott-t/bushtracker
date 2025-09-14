@@ -512,6 +512,12 @@ namespace BushDiversTracker.Services
 
         private void SimService_OnFlightSettingsReceived(object sender, SimSettingsData data)
         {
+            if (simFlightSettings?.aircraft_name != data.aircraft_name)
+            {
+                HelperService.WriteToLog($"Aircraft selected: {data.aircraft_name} {data.atcModel} {data.atcType}");
+                for (int i = 0; i < data.payload_station_count; ++i)
+                    HelperService.WriteToLog($"Payload station {i+1}: {data.payload_station_name[i]}");
+            }
 
             if (data.is_unlimited_fuel != 0)
             {
@@ -530,8 +536,15 @@ namespace BushDiversTracker.Services
             if (dispatchData != null && !WeightValid(data.total_weight, (double)dispatchData.TotalPayload))
             {
                 bFlightSettingsInvalidated = true;
-                if (simFlightSettings?.total_weight != data.total_weight)
-                    HelperService.WriteToLog("Flight settings changed: Payload weight changed");
+                if (simFlightSettings != null && simFlightSettings?.total_weight != data.total_weight)
+                {
+                    HelperService.WriteToLog($"Flight settings changed: Payload weight changed from {simFlightSettings?.total_weight} to {data.total_weight}, dispatch requires {dispatchData.TotalPayload}");
+                    for (int i = 0; i < data.payload_station_count; ++i)
+                    {
+                        if (simFlightSettings?.payload_station_weight[i] != data.payload_station_weight[i])
+                            HelperService.WriteToLog($"{data.payload_station_name[i]} from {simFlightSettings?.payload_station_weight[i]} to {data.payload_station_weight[i]}");
+                    }
+                }
             }
 
             simFlightSettings = data;
