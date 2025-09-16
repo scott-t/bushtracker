@@ -457,6 +457,8 @@ namespace BushDiversTracker
                     dgBookings.ItemsSource = null;
                     grpFlight.Visibility = Visibility.Hidden;
                 }
+                else
+                    HelperService.WriteToLog($"Error fetching dispatch: {ex.Message}");
             }
             lblFetch.Visibility = Visibility.Hidden;
         }
