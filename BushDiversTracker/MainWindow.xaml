@@ -6,87 +6,122 @@
         xmlns:local="clr-namespace:BushDiversTracker"
         mc:Ignorable="d"
         SizeToContent="WidthAndHeight"
-        Title="Bush Tracker" Background="White" Closing="Window_Closing" ResizeMode="CanMinimize" Loaded="Window_Loaded"
-        >
-    <Grid Width="755">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition Width="0*"/>
-        </Grid.ColumnDefinitions>
-        <PasswordBox x:Name="txtKey" HorizontalAlignment="Left" Padding="5" Margin="159,31,0,0" Password="" VerticalAlignment="Top" Width="583" Height="28"/>
-        <Label x:Name="label" Content="API Key:" HorizontalAlignment="Left" Margin="155,2,0,0" VerticalAlignment="Top" Height="26" Width="57"/>
-        <Button x:Name="btnFetchBookings" Click="btnFetchBookings_Click"  Content="Fetch Dispatch" Padding="5" Margin="10,140,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="133"/>
-        <StatusBar Margin="0,451,0,0" Height="33" VerticalAlignment="Top">
+        Title="Bush Tracker" Closing="Window_Closing" Loaded="Window_Loaded">
+    <DockPanel LastChildFill="True">
+        <StatusBar Margin="0,10,0,0" VerticalAlignment="Top" DockPanel.Dock="Bottom">
             <StatusBarItem HorizontalAlignment="Left">
-                <TextBlock x:Name="lblStatusText" Background="#D1D5DB" Foreground="#374151" Padding="5 3" FontSize="11" Text="Ok" />
+                <TextBlock x:Name="lblStatusText" Padding="5,5" Background="#D1D5DB" Foreground="#374151" FontSize="11" Text="Ok" />
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock x:Name="lblErrorText" Padding="5 3" Text="test" Background="#FECACA" Foreground="#DC2626" FontSize="11" />
+                <TextBlock x:Name="lblErrorText" Padding="5,5" Text="test" Background="#FECACA" Foreground="#DC2626" FontSize="11" />
             </StatusBarItem>
         </StatusBar>
-        <DataGrid x:Name="dgBookings" Margin="159,87,0,0" CanUserAddRows="False" HorizontalGridLinesBrush="#FF4B4949" VerticalGridLinesBrush="#FF4B4949" HorizontalAlignment="Left" Width="583" Height="100" VerticalAlignment="Top" ColumnWidth="Auto" MinColumnWidth="40" />
-        <!--<Button x:Name="btnStart" Click="btnStart_Click" IsEnabled="False"  Content="Start Flight" Padding="5" Margin="10,242,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99"/>-->
-        <Button x:Name="btnStop" Click="btnStop_Click" IsEnabled="True" Content="Cancel Flight" HorizontalAlignment="Left" Padding="5" Margin="10,242,0,0" VerticalAlignment="Top" Height="28" Width="133"/>
-        <GroupBox x:Name="grpFlight" Margin="159,228,0,0" VerticalAlignment="Top" Height="215" HorizontalAlignment="Left" Width="583">
-            <GroupBox.Header>
-                Dispatch Details
-            </GroupBox.Header>
-            <Canvas VerticalAlignment="Top" Height="191" Margin="2,0,0,0" HorizontalAlignment="Left" Width="571">
-                <Label x:Name="lblDep" Content="Departure:" Height="19" Width="66" HorizontalAlignment="Center" Padding="0" Canvas.Left="9" Canvas.Top="9" VerticalAlignment="Top"/>
-                <Label x:Name="txtDeparture" Content="Test" Width="92" Height="19" HorizontalAlignment="Center" Padding="0" Canvas.Left="99" Canvas.Top="9" VerticalAlignment="Center"/>
-                <Label x:Name="lblArr" Content="Arrival:" Height="19" Width="46" HorizontalAlignment="Center" Padding="0" Canvas.Left="10" Canvas.Top="48" VerticalAlignment="Top"/>
-                <Label x:Name="txtArrival" Content="Test" Width="92" Height="19" HorizontalAlignment="Center" Padding="0" Canvas.Left="99" Canvas.Top="48" VerticalAlignment="Center"/>
-                <Label x:Name="lblAircraft" Content="Aircraft:" Height="20" Width="50" HorizontalAlignment="Left" Padding="0" Canvas.Left="199" Canvas.Top="10" VerticalAlignment="Center"/>
-                <Label x:Name="txtAircraft" Content="Test" Width="234" Height="20" HorizontalAlignment="Left" Padding="0" Canvas.Left="286" Canvas.Top="10" VerticalAlignment="Center"/>
-                <Label x:Name="lblReg" Content="Registration:" Height="20" Width="76" HorizontalAlignment="Left" Padding="0" Canvas.Left="199" Canvas.Top="48" VerticalAlignment="Center"/>
-                <Label x:Name="txtRegistration" Content="Test" Width="234" Height="18" HorizontalAlignment="Left" Padding="0" Canvas.Left="286" Canvas.Top="48" VerticalAlignment="Center"/>
-                <Label x:Name="lblFuel" Content="Planned Fuel:" Height="19" Width="80" HorizontalAlignment="Left" Padding="0" Canvas.Left="199" Canvas.Top="92" VerticalAlignment="Center"/>
-                <Label x:Name="txtFuel" Content="Test" Width="234" Height="19" HorizontalAlignment="Center" Padding="0" Canvas.Left="286" Canvas.Top="92" VerticalAlignment="Center"/>
-                <Label x:Name="lblCargo" FontStyle="Italic" FontSize="10" Content="Cargo:" Height="18" Width="44" HorizontalAlignment="Left" Padding="0" Canvas.Left="20" Canvas.Top="110" VerticalAlignment="Top"/>
-                <Label x:Name="txtCargoWeight" FontStyle="Italic" FontSize="10" Content="Test" Width="92" Height="18" HorizontalAlignment="Left" Padding="0" Canvas.Left="99" Canvas.Top="110" VerticalAlignment="Center"/>
-                <Label x:Name="lblPax" FontStyle="Italic" FontSize="10" Content="PAX:" Height="18" Width="32" HorizontalAlignment="Center" Padding="0" Canvas.Left="20" Canvas.Top="126" VerticalAlignment="Center" RenderTransformOrigin="0.569,-0.554"/>
-                <Label x:Name="txtPaxCount" FontStyle="Italic" FontSize="10" Content="Test" Width="92" Height="19" HorizontalAlignment="Left" Padding="0" Canvas.Left="99" Canvas.Top="126" VerticalAlignment="Center"/>
-                <Label x:Name="lblDepartureError" Content="Incorrect location" Foreground="#FFF00808" Width="174" Height="19" HorizontalAlignment="Center" Padding="0" Canvas.Left="18" Canvas.Top="25" VerticalAlignment="Top"/>
-                <Label x:Name="lblCargoError" Content="Payload does not match" Foreground="#FFF00808" Width="165" Height="19" HorizontalAlignment="Left" Padding="0" Canvas.Left="18" Canvas.Top="167" VerticalAlignment="Center"/>
-                <Label x:Name="lblAircraftError" Foreground="#FFF00808" Content="Aircraft does not match" Height="18" Width="158" HorizontalAlignment="Left" Padding="0" Canvas.Left="208" Canvas.Top="25" VerticalAlignment="Center"/>
-                <Label x:Name="lblFuelError" Foreground="#FFF00808" Content="Fuel does not match" Height="20" Width="158" HorizontalAlignment="Left" Padding="0" Canvas.Left="208" Canvas.Top="124" VerticalAlignment="Center"/>
-                <Label x:Name="lblPayloadTotal" Content="Total Payload:" Height="19" Width="82" HorizontalAlignment="Center" Padding="0" Canvas.Left="9" Canvas.Top="92" VerticalAlignment="Top"/>
-                <Label x:Name="txtPayloadTotal" Content="Test" Width="92" Height="19" HorizontalAlignment="Center" Padding="0" Canvas.Left="99" Canvas.Top="92" VerticalAlignment="Center"/>
-                <Label x:Name="lblTour" Content="Tour:" Height="19" Width="36" HorizontalAlignment="Left" Padding="0" Canvas.Left="199" Canvas.Top="150" VerticalAlignment="Center"/>
-                <Label x:Name="txtTour" Content="Test" Width="234" Height="19" HorizontalAlignment="Center" Padding="0" Canvas.Left="286" Canvas.Top="150" VerticalAlignment="Center"/>
-                <Label x:Name="lblSimFuel" FontStyle="Italic" FontSize="10" Content="Sim Fuel:" Height="18" Width="48" HorizontalAlignment="Center" Padding="0" Canvas.Left="208" Canvas.Top="110" VerticalAlignment="Top"/>
-                <Label x:Name="txtSimFuel" FontStyle="Italic" FontSize="10" Content="N/A" Width="234" Height="18" HorizontalAlignment="Center" Padding="0" Canvas.Left="286" Canvas.Top="110" VerticalAlignment="Center"/>
-                <Label x:Name="lblSimPayload" FontStyle="Italic" FontSize="10" Content="Sim Payload:" Height="19" Width="64" Padding="0" Canvas.Left="18" Canvas.Top="150" HorizontalAlignment="Center" VerticalAlignment="Top"/>
-                <Label x:Name="txtSimPayload" FontStyle="Italic" FontSize="10" Content="N/A" Width="92" Height="19" Padding="0" Canvas.Left="99" Canvas.Top="150" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                <Label x:Name="lblSettingsError" Content="Game settings are invalid" Foreground="#FFF00808" Width="167" Height="19" Padding="0" Canvas.Left="199" Canvas.Top="167" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Grid.Column="0" Margin="10">
+            <Label x:Name="lblVersion" Content="" HorizontalAlignment="Stretch" VerticalAlignment="Top" FontSize="8"/>
+                
+            </StackPanel>
+            <StackPanel Grid.Row="0" Grid.Column="1">
+                <Grid MinWidth="3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Column="0" x:Name="label" Content="API Key:" Margin="10,5"/>
+                    <Label Grid.Column="1" x:Name="lblConnectStatus" Content="MSFS Connection Status:" Margin="10,5,0,5" HorizontalAlignment="Right"/>
+                    <Ellipse Grid.Column="2" x:Name="elConnection" Height="10" Margin="10" Stroke="Red" Fill="Red" HorizontalAlignment="Right" Width="10"/>
+                </Grid>
+                <PasswordBox x:Name="txtKey" Padding="5" Margin="10,5,10,10" Password="" VerticalAlignment="Top"/>
+            </StackPanel>
+            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,0">
+                <Button x:Name="btnConnect" ContextMenuOpening="btnConnect_ContextOpen" Click="btnConnect_Click" Content="Connect to Sim" Padding="5" Margin="10,10,0,0" HorizontalAlignment="Stretch" >
+                    <Button.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="MSFS (SimConnect)" Click="btnConnect_SetSim" Name="mnuSetSimMSFS"/>
+                            <MenuItem Header="XPlane" Click="btnConnect_SetSim" Name="mnuSetSimXP" IsEnabled="False" />
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
+                <CheckBox x:Name="chkTextToSim" Content="Send text to sim" Margin="10,10,0,0" Checked="chkSimText_Checked" Unchecked="chkSimText_Checked" ToolTip="When checked, BushTracker will automatically attempt to start tracking your flight"/>
+                <Button x:Name="btnFetchBookings" Click="btnFetchBookings_Click"  Content="Fetch Dispatch" Padding="5" Margin="10,10,0,0" HorizontalAlignment="Stretch" />
+                <Label x:Name="lblFetch" Content="fetching..." HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="10" Height="23" Width="53"/>
+            </StackPanel>
+            <StackPanel Grid.Row="1" Grid.Column="1" Margin="10">
+                <DataGrid x:Name="dgBookings" CanUserAddRows="False" HorizontalGridLinesBrush="#FF4B4949" VerticalGridLinesBrush="#FF4B4949" Height="100" ColumnWidth="Auto" MinColumnWidth="40" />
+                <Label x:Name="lblDeadHead" Content="This is a deadhead flight, there is no cargo" Margin="0" FontSize="10" />
+            </StackPanel>
+            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,10,0" Orientation="Vertical">
+                <Button x:Name="btnStop" Click="btnStop_Click" IsEnabled="True" Content="Cancel Flight" Padding="5" Margin="10,10,0,0" HorizontalAlignment="Stretch" />
+                <Canvas Margin="10,10,0,0">
+                    <Label x:Name="lblStart" Content="checking info..." Margin="9,0,0,0" FontSize="10" Height="23"/>
+                    <Label x:Name="lblDistanceLabel" Content="Distance:" HorizontalAlignment="Left" Margin="9,0,0,0" FontSize="10" Height="23"/>
+                    <Label x:Name="lblDistance" Content="0" Margin="58,0,0,0" FontSize="10" Height="23"/>
+                </Canvas>
+                
+                <Label x:Name="lblTrackerStatus" Content="..." Margin="10,5,0,0" FontSize="10" Height="23" />
+                <Label x:Name="lblFlightStatus" Content="..." Margin="10,5,0,0" FontSize="10" Height="23" />
 
-            </Canvas>
-        </GroupBox>
-        <Ellipse x:Name="elConnection" Height="10" Margin="732,10,0,0" Stroke="Red" Fill="Red" VerticalAlignment="Top" RenderTransformOrigin="-0.3,-1.596" HorizontalAlignment="Left" Width="10"/>
-        <Button x:Name="btnConnect" ContextMenuOpening="btnConnect_ContextOpen" Click="btnConnect_Click" Content="Connect to Sim" Padding="5" Margin="10,87,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="133">
-            <Button.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="MSFS (SimConnect)" Click="btnConnect_SetSim" Name="mnuSetSimMSFS"/>
-                    <MenuItem Header="XPlane" Click="btnConnect_SetSim" Name="mnuSetSimXP" IsEnabled="False" />
-                </ContextMenu>
-            </Button.ContextMenu>
-        </Button>
-        <Label x:Name="lblFetch" Content="fetching..." HorizontalAlignment="Left" Margin="10,164,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="53"/>
-        <Button x:Name="btnSubmit" Click="btnSubmit_Click" IsEnabled="False" Content="Submit Pirep" Padding="5" Margin="10,324,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="133"/>
-        <Label x:Name="lblStart" Content="checking info..." HorizontalAlignment="Left" Margin="9,265,0,0" VerticalAlignment="Top" FontSize="10" Height="23" Width="99"/>
-        <Label x:Name="lblVersion" Content="" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" Height="26" Width="50" RenderTransformOrigin="0.46,0.117" FontSize="8"/>
-        <Label x:Name="lblConnectStatus" Content="MSFS Connection Status:" HorizontalAlignment="Left" Margin="583,1,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="lblDistanceLabel" Content="Distance:" HorizontalAlignment="Left" Margin="9,265,0,0" VerticalAlignment="Top" FontSize="10"/>
-        <Label x:Name="lblDistance" Content="0" HorizontalAlignment="Left" Margin="58,265,0,0" VerticalAlignment="Top" FontSize="10" RenderTransformOrigin="0.624,-0.93"/>
-        <Label x:Name="lblDeadHead" Content="This is a deadhead flight, there is no cargo" HorizontalAlignment="Left" Margin="155,61,0,0" VerticalAlignment="Top" FontSize="10" Width="356"/>
-        <Label x:Name="lblSubmitting" Content="submitting..." HorizontalAlignment="Left" Margin="10,348,0,0" VerticalAlignment="Top" FontSize="10" RenderTransformOrigin="0.577,0.019"/>
-        <RadioButton x:Name="rdoUnitUS" Content="US" Height="15" Margin="10,376,0,0" VerticalAlignment="Top" GroupName="unitOfMeasure" HorizontalAlignment="Left" Width="45" Checked="rdoUnitType_Checked"/>
-        <RadioButton x:Name="rdoUnitMetric" Content="Metric" HorizontalAlignment="Left" Height="15" Margin="55,376,0,0" VerticalAlignment="Top" Width="53" GroupName="unitOfMeasure" Checked="rdoUnitType_Checked"/>
-        <Button x:Name="btnAddons" Content="BD Addons" Visibility="Hidden" Padding="5" Margin="643,415,0,0" VerticalAlignment="Top" Height="28" HorizontalAlignment="Left" Width="99" Click="btnAddons_Click"/>
-        <CheckBox x:Name="chkAutoStart" Content="Allow tracking start" Margin="10,408,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="chkAutoStart_Checked" Unchecked="chkAutoStart_Checked" ToolTip="When checked, BushTracker will automatically attempt to start tracking your flight"/>
-        <Label x:Name="lblFlightStatus" Content="..." HorizontalAlignment="Left" Margin="10,299,0,0" VerticalAlignment="Top" FontSize="10" Height="22" Width="99"/>
-        <Label x:Name="lblTrackerStatus" Content="..." HorizontalAlignment="Left" Margin="10,281,0,0" VerticalAlignment="Top" FontSize="10" Height="22" Width="99"/>
-        <CheckBox x:Name="chkQuickstart" Content="Allow running engine" Margin="10,428,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="chkQuickstart_Checked" Unchecked="chkQuickstart_Checked" ToolTip="When checked, BushTracker will permit tracking start with engine already running.&#x0a;&#x0a;We reserve the right to make a frowny face and deduct imaginary internet points."/>
-        <CheckBox x:Name="chkTextToSim" Content="Send text to sim" Margin="10,120,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="chkSimText_Checked" Unchecked="chkSimText_Checked" ToolTip="When checked, BushTracker will automatically attempt to start tracking your flight"/>
-    </Grid>
+                <Button x:Name="btnSubmit" Click="btnSubmit_Click" IsEnabled="False" Content="Submit Pirep" Padding="5" Margin="10,10,0,0" HorizontalAlignment="Stretch" />
+                <Label x:Name="lblSubmitting" Content="submitting..." HorizontalAlignment="Left" Margin="10,10,0,0" FontSize="10"/>
+
+                <StackPanel Orientation="Horizontal" Margin="10,10,0,0">
+                    <RadioButton x:Name="rdoUnitUS" Content="US" Margin="0,5" GroupName="unitOfMeasure" Checked="rdoUnitType_Checked" MinWidth="70" />
+                    <RadioButton x:Name="rdoUnitMetric" Content="Metric" Margin="0,5" GroupName="unitOfMeasure" Checked="rdoUnitType_Checked" />
+                </StackPanel>
+                <CheckBox x:Name="chkAutoStart" Content="Allow tracking start" Margin="10,5,0,0" VerticalAlignment="Top" Checked="chkAutoStart_Checked" Unchecked="chkAutoStart_Checked" ToolTip="When checked, BushTracker will automatically attempt to start tracking your flight"/>
+                <CheckBox x:Name="chkQuickstart" Content="Allow running engine" Margin="10,5,0,0" VerticalAlignment="Top" Checked="chkQuickstart_Checked" Unchecked="chkQuickstart_Checked" ToolTip="When checked, BushTracker will permit tracking start with engine already running.&#x0a;&#x0a;We reserve the right to make a frowny face and deduct imaginary internet points."/>
+                
+                <Button x:Name="btnAddons" Content="BD Addons" Visibility="Hidden" Padding="0" Margin="0" VerticalAlignment="Top" HorizontalAlignment="Stretch" Click="btnAddons_Click"/>
+            </StackPanel>
+            <StackPanel Grid.Row="2" Grid.Column="1">
+                <GroupBox x:Name="grpFlight" Margin="10,0,10,10" VerticalAlignment="Top" Height="215" HorizontalAlignment="Stretch">
+                    <GroupBox.Header>
+                        Dispatch Details
+                    </GroupBox.Header>
+                    <Canvas VerticalAlignment="Top" Height="191" Margin="2,0,0,0" HorizontalAlignment="Stretch" MinWidth="571">
+                        <Label x:Name="lblDep" Content="Departure:" Height="19" Width="66" HorizontalAlignment="Center" Padding="0" Canvas.Left="9" Canvas.Top="9" VerticalAlignment="Top"/>
+                        <Label x:Name="txtDeparture" Content="Test" Width="92" Height="19" HorizontalAlignment="Center" Padding="0" Canvas.Left="99" Canvas.Top="9" VerticalAlignment="Center"/>
+                        <Label x:Name="lblArr" Content="Arrival:" Height="19" Width="46" HorizontalAlignment="Center" Padding="0" Canvas.Left="10" Canvas.Top="48" VerticalAlignment="Top"/>
+                        <Label x:Name="txtArrival" Content="Test" Width="92" Height="19" HorizontalAlignment="Center" Padding="0" Canvas.Left="99" Canvas.Top="48" VerticalAlignment="Center"/>
+                        <Label x:Name="lblAircraft" Content="Aircraft:" Height="20" Width="50" HorizontalAlignment="Left" Padding="0" Canvas.Left="199" Canvas.Top="10" VerticalAlignment="Center"/>
+                        <Label x:Name="txtAircraft" Content="Test" Width="234" Height="20" HorizontalAlignment="Left" Padding="0" Canvas.Left="286" Canvas.Top="10" VerticalAlignment="Center"/>
+                        <Label x:Name="lblReg" Content="Registration:" Height="20" Width="76" HorizontalAlignment="Left" Padding="0" Canvas.Left="199" Canvas.Top="48" VerticalAlignment="Center"/>
+                        <Label x:Name="txtRegistration" Content="Test" Width="234" Height="18" HorizontalAlignment="Left" Padding="0" Canvas.Left="286" Canvas.Top="48" VerticalAlignment="Center"/>
+                        <Label x:Name="lblFuel" Content="Planned Fuel:" Height="19" Width="80" HorizontalAlignment="Left" Padding="0" Canvas.Left="199" Canvas.Top="92" VerticalAlignment="Center"/>
+                        <Label x:Name="txtFuel" Content="Test" Width="234" Height="19" HorizontalAlignment="Center" Padding="0" Canvas.Left="286" Canvas.Top="92" VerticalAlignment="Center"/>
+                        <Label x:Name="lblCargo" FontStyle="Italic" FontSize="10" Content="Cargo:" Height="18" Width="44" HorizontalAlignment="Left" Padding="0" Canvas.Left="20" Canvas.Top="110" VerticalAlignment="Top"/>
+                        <Label x:Name="txtCargoWeight" FontStyle="Italic" FontSize="10" Content="Test" Width="92" Height="18" HorizontalAlignment="Left" Padding="0" Canvas.Left="99" Canvas.Top="110" VerticalAlignment="Center"/>
+                        <Label x:Name="lblPax" FontStyle="Italic" FontSize="10" Content="PAX:" Height="18" Width="32" HorizontalAlignment="Center" Padding="0" Canvas.Left="20" Canvas.Top="126" VerticalAlignment="Center"/>
+                        <Label x:Name="txtPaxCount" FontStyle="Italic" FontSize="10" Content="Test" Width="92" Height="19" HorizontalAlignment="Left" Padding="0" Canvas.Left="99" Canvas.Top="126" VerticalAlignment="Center"/>
+                        <Label x:Name="lblDepartureError" Content="Incorrect location" Foreground="#FFF00808" Width="174" Height="19" HorizontalAlignment="Center" Padding="0" Canvas.Left="18" Canvas.Top="25" VerticalAlignment="Top"/>
+                        <Label x:Name="lblCargoError" Content="Payload does not match" Foreground="#FFF00808" Width="165" Height="19" HorizontalAlignment="Left" Padding="0" Canvas.Left="18" Canvas.Top="167" VerticalAlignment="Center"/>
+                        <Label x:Name="lblAircraftError" Foreground="#FFF00808" Content="Aircraft does not match" Height="18" Width="158" HorizontalAlignment="Left" Padding="0" Canvas.Left="208" Canvas.Top="25" VerticalAlignment="Center"/>
+                        <Label x:Name="lblFuelError" Foreground="#FFF00808" Content="Fuel does not match" Height="20" Width="158" HorizontalAlignment="Left" Padding="0" Canvas.Left="208" Canvas.Top="124" VerticalAlignment="Center"/>
+                        <Label x:Name="lblPayloadTotal" Content="Total Payload:" Height="19" Width="82" HorizontalAlignment="Center" Padding="0" Canvas.Left="9" Canvas.Top="92" VerticalAlignment="Top"/>
+                        <Label x:Name="txtPayloadTotal" Content="Test" Width="92" Height="19" HorizontalAlignment="Center" Padding="0" Canvas.Left="99" Canvas.Top="92" VerticalAlignment="Center"/>
+                        <Label x:Name="lblTour" Content="Tour:" Height="19" Width="36" HorizontalAlignment="Left" Padding="0" Canvas.Left="199" Canvas.Top="150" VerticalAlignment="Center"/>
+                        <Label x:Name="txtTour" Content="Test" Width="234" Height="19" HorizontalAlignment="Center" Padding="0" Canvas.Left="286" Canvas.Top="150" VerticalAlignment="Center"/>
+                        <Label x:Name="lblSimFuel" FontStyle="Italic" FontSize="10" Content="Sim Fuel:" Height="18" Width="48" HorizontalAlignment="Center" Padding="0" Canvas.Left="208" Canvas.Top="110" VerticalAlignment="Top"/>
+                        <Label x:Name="txtSimFuel" FontStyle="Italic" FontSize="10" Content="N/A" Width="234" Height="18" HorizontalAlignment="Center" Padding="0" Canvas.Left="286" Canvas.Top="110" VerticalAlignment="Center"/>
+                        <Label x:Name="lblSimPayload" FontStyle="Italic" FontSize="10" Content="Sim Payload:" Height="19" Width="64" Padding="0" Canvas.Left="18" Canvas.Top="150" HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                        <Label x:Name="txtSimPayload" FontStyle="Italic" FontSize="10" Content="N/A" Width="92" Height="19" Padding="0" Canvas.Left="99" Canvas.Top="150" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Label x:Name="lblSettingsError" Content="Game settings are invalid" Foreground="#FFF00808" Width="167" Height="19" Padding="0" Canvas.Left="199" Canvas.Top="167" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+
+                    </Canvas>
+                </GroupBox>
+            </StackPanel>
+        </Grid>
+
+    </DockPanel>
+
 </Window>
