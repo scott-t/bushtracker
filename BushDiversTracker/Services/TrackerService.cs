@@ -386,8 +386,10 @@ namespace BushDiversTracker.Services
                         if (rate < 0.0)
                             rate = 0.0;
 
+                        bool landingSet = false;
                         if (worstLanding == null || worstLanding?.touchdown_velocity < rate)
                         {
+                            landingSet = true;
                             worstLanding = new SimLandingData
                             {
                                 touchdown_velocity = rate,
@@ -397,6 +399,8 @@ namespace BushDiversTracker.Services
                                 touchdown_lon = data.longitude
                             };
                         }
+                        
+                        HelperService.WriteToLog("Landing on water: " + rate.ToString("0.##") + "fpm " + data.ac_pitch.ToString("0.##") + "deg / " + data.ac_bank.ToString("0.##") + "deg at " + data.latitude.ToString("0.##") + " " + data.longitude.ToString("0.##") + (landingSet ? " (new landing set)" : ""));
                     }
 
                     if (onGround && double.Abs(data.surface_rel_groundspeed) < 40)

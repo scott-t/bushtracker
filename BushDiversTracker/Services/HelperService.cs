@@ -163,6 +163,8 @@ namespace BushDiversTracker.Services
             return delta >= HEADING_CHANGE_THRESHOLD;
         }
 
+        private static readonly object _logLock = new();
+
         /// <summary>
         /// Sends information to log file
         /// </summary>
@@ -171,8 +173,10 @@ namespace BushDiversTracker.Services
         {
             try
             {
-                using StreamWriter w = File.AppendText("log.txt");
-                w.WriteLine($"{DateTime.Now.ToLongTimeString()} {DateTime.Now.ToLongDateString()}: {msg}");
+                lock (_logLock)
+                {
+                    File.AppendAllText("log.txt", $"{DateTime.Now.ToLongTimeString()} {DateTime.Now.ToLongDateString()}: {msg}\n");
+                }
             }
             catch (Exception)
             {
