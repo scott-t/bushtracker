@@ -357,11 +357,18 @@ namespace BushDiversTracker.Services
                 // check for take off
                 if (FlightStatus == PirepStatusType.BOARDING && !onGround && data.alt_above_ground > 200) // arbitrary number to avoid advancing state on bouncy water takeoff
                 {
-                    FlightStatus = PirepStatusType.DEPARTED;
-                    _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.DEPARTED });
-
-                    _mainWindow.SetStatusMessage("Departed");
-                    _sim.SendTextToSim("Bush Tracker Status: Departed - Have a good flight!");
+                    if (!WeightValid(simFlightSettings.Value.total_weight, (double)dispatchData.TotalPayload))
+                    {
+                        bFlightSettingsInvalidated = true;
+                        HelperService.WriteToLog("Aborting flight after takeoff - Payload weight invalid");
+                    }
+                    else
+                    {
+                        FlightStatus = PirepStatusType.DEPARTED;
+                        _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.DEPARTED });
+                        _mainWindow.SetStatusMessage("Departed");
+                        _sim.SendTextToSim("Bush Tracker Status: Departed - Have a good flight!");
+                    }
                 }
                 else if (FlightStatus == PirepStatusType.DEPARTED && (data.alt_above_ground > 500 || (data.alt_above_ground > 250 && data.vspeed < 3))) // 3fps = 180 fpm
                 {
@@ -535,7 +542,10 @@ namespace BushDiversTracker.Services
 
             if (dispatchData != null && !WeightValid(data.total_weight, (double)dispatchData.TotalPayload))
             {
-                bFlightSettingsInvalidated = true;
+                bool mustInvalidate = (!data.IsHelicopter || lastSimData.alt_above_ground > 50);
+                if (mustInvalidate)
+                    bFlightSettingsInvalidated = true;
+                
                 if (simFlightSettings != null && simFlightSettings?.total_weight != data.total_weight)
                 {
                     HelperService.WriteToLog($"Flight settings changed: Payload weight changed from {simFlightSettings?.total_weight} to {data.total_weight}, dispatch requires {dispatchData.TotalPayload}");
@@ -544,6 +554,8 @@ namespace BushDiversTracker.Services
                         if (simFlightSettings?.payload_station_weight[i] != data.payload_station_weight[i])
                             HelperService.WriteToLog($"{data.payload_station_name[i]} from {simFlightSettings?.payload_station_weight[i]} to {data.payload_station_weight[i]}");
                     }
+                    if (!mustInvalidate)
+                        HelperService.WriteToLog("Not invalidating due to helicopter tolerance");
                 }
             }
 
@@ -590,6 +602,8 @@ namespace BushDiversTracker.Services
                 fuelError = true;
 
             cargoError = !WeightValid(data.FlightSettings.total_weight, (double)dispatchData.TotalPayload);
+            if (simFlightSettings.HasValue && simFlightSettings.Value.IsHelicopter)
+                cargoError = false;
 
             bool settingsError = data.FlightSettings.is_unlimited_fuel != 0 || data.FlightSettings.is_slew_mode != 0;
 

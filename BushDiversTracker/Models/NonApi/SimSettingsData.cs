@@ -36,6 +36,8 @@ namespace BushDiversTracker.Models.NonApi
         public string atcType;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 8)]
         public string atcModel;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+        public string category;
 
         public int is_unlimited_fuel;
         public int is_slew_mode;
@@ -46,6 +48,7 @@ namespace BushDiversTracker.Models.NonApi
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = MAX_PAYLOAD_STATIONS)]
         public double[] payload_station_weight;
         public double total_weight;
-        
+
+        public readonly bool IsHelicopter => category != null && category.Contains("helicopter", StringComparison.OrdinalIgnoreCase);
     };
 }

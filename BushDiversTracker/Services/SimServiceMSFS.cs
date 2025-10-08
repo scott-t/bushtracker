@@ -1,12 +1,13 @@
-﻿using Microsoft.FlightSimulator.SimConnect;
-using BushDiversTracker.Models.Enums;
+﻿using BushDiversTracker.Models.Enums;
 using BushDiversTracker.Models.NonApi;
+using Microsoft.FlightSimulator.SimConnect;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
-using System.Windows;
-using System.Linq;
 
 namespace BushDiversTracker.Services
 {
@@ -140,6 +141,8 @@ namespace BushDiversTracker.Services
                 simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "ATC ID", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "ATC TYPE", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "ATC MODEL", (string)null, SIMCONNECT_DATATYPE.STRING8, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "CATEGORY", (string)null, SIMCONNECT_DATATYPE.STRING256, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+
                 simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "UNLIMITED FUEL", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "IS SLEW ACTIVE", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
                 simConnect.AddToDataDefinition(DEFINITIONS.FlightSettingsStruct, "PAYLOAD STATION COUNT", "Number", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
