@@ -59,7 +59,8 @@ namespace BushDiversTracker.Services
             LandingStruct,
             FlightSettingsStruct,
 
-            SetSlew
+            SetSlew,
+            SetDispatch
 
         }
 
@@ -69,7 +70,8 @@ namespace BushDiversTracker.Services
             LANDING_DATA,
             FLIGHT_SETTINGS_DATA,
 
-            SET_SLEW
+            SET_SLEW,
+            SET_DISPATCH
         }
 
         // TODO: for events
@@ -200,6 +202,7 @@ namespace BushDiversTracker.Services
                 simConnect.OnRecvSimobjectData += new SimConnect.RecvSimobjectDataEventHandler(simConnect_OnRecvSimobjectData);
 
                 simConnect.AddToDataDefinition(DEFINITIONS.SetSlew, "IS SLEW ALLOWED", "Bool", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
+                simConnect.AddToDataDefinition(DEFINITIONS.SetDispatch, "L:BUSHDIVERS_CARGO_DISPATCH", "Number", SIMCONNECT_DATATYPE.INT32, 0.0f, SimConnect.SIMCONNECT_UNUSED);
 
             }
             catch (COMException ex)
@@ -382,7 +385,7 @@ namespace BushDiversTracker.Services
         /// Allow or block slew mode
         /// </summary>
         /// <param name="strictMode"></param>
-        public void SetStrictMode(bool strictMode)
+        public void SetStrictMode(bool strictMode, double dispatchWeight)
         {
             if (simConnect == null)
                 return;
@@ -392,6 +395,11 @@ namespace BushDiversTracker.Services
                 // Set slew mode
                 bool isSlewAllowed = !strictMode;// ? 0 : 1;
                 simConnect.SetDataOnSimObject(DEFINITIONS.SetSlew, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, isSlewAllowed);
+                if (strictMode)
+                {
+                    int dw = (int)dispatchWeight;
+                    simConnect.SetDataOnSimObject(DEFINITIONS.SetDispatch, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, dw);
+                }
             }
             catch (COMException ex)
             {

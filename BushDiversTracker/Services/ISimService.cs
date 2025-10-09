@@ -24,6 +24,6 @@ namespace BushDiversTracker.Services
         /// Set strict mode for flight tracking (disable slew, etc)
         /// </summary>
         /// <param name="strictMode"></param>
-        void SetStrictMode(bool strictMode);
+        void SetStrictMode(bool strictMode, double dispatchWeight);
     }
 }

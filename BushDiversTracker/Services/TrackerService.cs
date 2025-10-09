@@ -280,7 +280,7 @@ namespace BushDiversTracker.Services
         private void SetTrackerState(TrackerState newState)
         {
             state = newState;
-            _sim.SetStrictMode(state == TrackerState.ReadyToStart || state == TrackerState.InFlight);
+            _sim.SetStrictMode(state == TrackerState.ReadyToStart || state == TrackerState.InFlight, decimal.ToDouble(dispatchData.CargoWeight));
             OnTrackerStateChanged?.Invoke(this, state);
         }
 
