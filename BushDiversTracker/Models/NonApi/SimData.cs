@@ -37,7 +37,7 @@ namespace BushDiversTracker.Models.NonApi
         public int on_ground;
         public int surface_type;
         public double fuel_qty;
-        public double fuelsystem_tank1_capacity;
+        public bool is_modern_fuel;
         public double unusable_fuel_qty;
         public int fuel_flow;
 
