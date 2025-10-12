@@ -107,6 +107,7 @@ namespace BushDiversTracker.Services
             {
                 Console.WriteLine(ex.Message);
                 CloseConnection();
+                HelperService.WriteToLog($"Exception on window message: {ex.Message}");
                 return IntPtr.Zero;
             }
             return IntPtr.Zero;
@@ -313,6 +314,11 @@ namespace BushDiversTracker.Services
             else if (data.dwRequestID == (uint)DAT_REQUESTS.FLIGHT_SETTINGS_DATA)
             {
                 SimSettingsData data1 = (SimSettingsData)data.dwData[0];
+                if (data1.payload_station_count > SimSettingsData.MAX_PAYLOAD_STATIONS)
+                    data1.payload_station_count = SimSettingsData.MAX_PAYLOAD_STATIONS; // Aerostar sets this to '20'... docs imply max of 15. what's a plausible max?
+
+                ApplyAircraftHacks(ref data1);
+
                 data1.total_weight = data1.payload_station_weight.Take(data1.payload_station_count).Sum();
                 OnFlightSettingsReceived?.Invoke(this, data1);
             }
@@ -438,6 +444,25 @@ namespace BushDiversTracker.Services
         {
             if (SendSimText)
                 simConnect.Text(SIMCONNECT_TEXT_TYPE.PRINT_BLACK, 5, SIMCONNECT_EVENT_FLAG.DEFAULT, text);
+        }
+
+        /// <summary>
+        /// Apply aircraft specific hacks to fix known issues
+        /// </summary>
+        /// 
+        private void ApplyAircraftHacks(ref SimSettingsData data)
+        {
+            // A2A Aerostar - payload stations include engine oil weight
+            if (data.aircraft_name.StartsWith("a2a piper aerostar", StringComparison.OrdinalIgnoreCase))
+            {
+                for (int i = 0; i < data.payload_station_count; i++)
+                {
+                    if (data.payload_station_name[i].value.EndsWith(" oil", StringComparison.OrdinalIgnoreCase))
+                    {
+                        data.payload_station_weight[i] = 0;
+                    }
+                }
+            }
         }
 
     }
