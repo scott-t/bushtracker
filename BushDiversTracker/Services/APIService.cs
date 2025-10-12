@@ -34,7 +34,16 @@ namespace BushDiversTracker.Services
             HttpResponseMessage res = await _http.GetAsync($"{baseUrl}/dispatch/cargo");
             if (res.StatusCode == HttpStatusCode.OK)
             {
-                return await res.Content.ReadFromJsonAsync<ICollection<DispatchCargo>>();
+                try
+                {
+                    return await res.Content.ReadFromJsonAsync<ICollection<DispatchCargo>>();
+                }
+                catch (Exception ex)
+                {
+                    HelperService.WriteToLog($"Error deserializing dispatch cargo: {ex.Message}:");
+                    HelperService.WriteToLog(res.Content.ReadAsStringAsync().Result);
+                    throw;
+                }
             }
             else if (res.StatusCode == HttpStatusCode.Unauthorized)
             {
