@@ -510,6 +510,11 @@ namespace BushDiversTracker
             _tracker.AllowEngineHotstart = chkQuickstart.IsChecked == true;
         }
 
+        private void chkHeliSlings_Checked(object sender, RoutedEventArgs e)
+        {
+            _tracker.AllowHeliSlings = chkHeliSlings.IsChecked == true;
+        }
+
         private void chkSimText_Checked(object sender, RoutedEventArgs e)
         {
             _simConnect.SendSimText = chkTextToSim.IsChecked == true;

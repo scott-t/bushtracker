@@ -45,6 +45,7 @@ namespace BushDiversTracker.Services
         public TrackerState State { get => state; }
         public bool AllowStart = Settings.Default.AutoStart;
         public bool AllowEngineHotstart = false;
+        public bool AllowHeliSlings = false;
 
         private Dispatch dispatchData = null;
         public Dispatch Dispatch { get => dispatchData; }
@@ -546,7 +547,7 @@ namespace BushDiversTracker.Services
 
             if (dispatchData != null && !WeightValid(data.total_weight, (double)dispatchData.TotalPayload))
             {
-                bool mustInvalidate = (!data.IsHelicopter || lastSimData.alt_above_ground > 50);
+                bool mustInvalidate = (!data.IsHelicopter || lastSimData.alt_above_ground > 50 || !AllowHeliSlings);
                 if (mustInvalidate)
                     bFlightSettingsInvalidated = true;
                 
@@ -606,7 +607,7 @@ namespace BushDiversTracker.Services
                 fuelError = true;
 
             cargoError = !WeightValid(data.FlightSettings.total_weight, (double)dispatchData.TotalPayload);
-            if (simFlightSettings.HasValue && simFlightSettings.Value.IsHelicopter)
+            if (simFlightSettings.HasValue && simFlightSettings.Value.IsHelicopter && AllowHeliSlings)
                 cargoError = false;
 
             bool settingsError = data.FlightSettings.is_unlimited_fuel != 0 || data.FlightSettings.is_slew_mode != 0;

@@ -80,6 +80,7 @@
                 </StackPanel>
                 <CheckBox x:Name="chkAutoStart" Content="Allow tracking start" Margin="10,5,0,0" VerticalAlignment="Top" Checked="chkAutoStart_Checked" Unchecked="chkAutoStart_Checked" ToolTip="When checked, BushTracker will automatically attempt to start tracking your flight"/>
                 <CheckBox x:Name="chkQuickstart" Content="Allow running engine" Margin="10,5,0,0" VerticalAlignment="Top" Checked="chkQuickstart_Checked" Unchecked="chkQuickstart_Checked" ToolTip="When checked, BushTracker will permit tracking start with engine already running.&#x0a;&#x0a;We reserve the right to make a frowny face and deduct imaginary internet points."/>
+                <CheckBox x:Name="chkHeliSlings" Content="Helicopter sling loads" Margin="10,5,0,0" Checked="chkHeliSlings_Checked" Unchecked="chkHeliSlings_Checked" ToolTip="When checked, BushTracker will permit startup/takeoff below weight thresholds, to permit sling loads. Weights must meet minimum tolerance by the time you leave the airport vicinity."/>
                 
                 <Button x:Name="btnAddons" Content="BD Addons" Visibility="Hidden" Padding="0" Margin="0" VerticalAlignment="Top" HorizontalAlignment="Stretch" Click="btnAddons_Click"/>
             </StackPanel>
