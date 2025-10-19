@@ -281,7 +281,7 @@ namespace BushDiversTracker.Services
         private void SetTrackerState(TrackerState newState)
         {
             state = newState;
-            _sim.SetStrictMode(state == TrackerState.ReadyToStart || state == TrackerState.InFlight, decimal.ToDouble(dispatchData.CargoWeight));
+            _sim.SetStrictMode(state == TrackerState.ReadyToStart || state == TrackerState.InFlight, dispatchData == null ? 0.0 : decimal.ToDouble(dispatchData.CargoWeight));
             OnTrackerStateChanged?.Invoke(this, state);
         }
 
@@ -547,7 +547,7 @@ namespace BushDiversTracker.Services
 
             if (dispatchData != null && !WeightValid(data.total_weight, (double)dispatchData.TotalPayload))
             {
-                bool mustInvalidate = (!data.IsHelicopter || lastSimData.alt_above_ground > 50 || !AllowHeliSlings);
+                bool mustInvalidate = (!data.IsHelicopter || lastSimData.alt_above_ground > 100 || !AllowHeliSlings);
                 if (mustInvalidate)
                     bFlightSettingsInvalidated = true;
                 
