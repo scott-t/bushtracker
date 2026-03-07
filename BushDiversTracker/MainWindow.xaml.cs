@@ -433,11 +433,10 @@ namespace BushDiversTracker
             try
             {
                 var dispatch = await _api.GetDispatchInfoAsync();
-                if (dispatch.IsEmpty == 0)
+                if (dispatch.Cargo.Length > 0)
                 {
-                    var dispatchCargo = await _api.GetDispatchCargoAsync();
                     // load bookings into grid
-                    dgBookings.ItemsSource = dispatchCargo;
+                    dgBookings.ItemsSource = dispatch.Cargo;
                     dgBookings.Columns.Last().Width = new DataGridLength(1, DataGridLengthUnitType.Star);
                 }
                 else

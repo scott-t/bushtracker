@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BushDiversTracker"
         mc:Ignorable="d"
-        SizeToContent="WidthAndHeight"
+        SizeToContent="Height"
+        Width="900"
         Title="Bush Tracker" Closing="Window_Closing" Loaded="Window_Loaded">
     <DockPanel LastChildFill="True">
         <StatusBar Margin="0,10,0,0" VerticalAlignment="Top" DockPanel.Dock="Bottom">
@@ -57,7 +58,19 @@
                 <Label x:Name="lblFetch" Content="fetching..." HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="10" Height="23" Width="53"/>
             </StackPanel>
             <StackPanel Grid.Row="1" Grid.Column="1" Margin="10">
-                <DataGrid x:Name="dgBookings" CanUserAddRows="False" HorizontalGridLinesBrush="#FF4B4949" VerticalGridLinesBrush="#FF4B4949" Height="100" ColumnWidth="Auto" MinColumnWidth="40" />
+                <DataGrid x:Name="dgBookings" CanUserAddRows="False" 
+                          HorizontalGridLinesBrush="#FF4B4949" VerticalGridLinesBrush="#FF4B4949" 
+                          Height="100" 
+                          ColumnWidth="Auto" MinColumnWidth="40"
+                          VerticalContentAlignment="Center"
+                          HorizontalAlignment="Stretch">
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            <Setter Property="Padding" Value="4"/>
+                        </Style>
+                    </DataGrid.CellStyle>
+                </DataGrid>
                 <Label x:Name="lblDeadHead" Content="This is a deadhead flight, there is no cargo" Margin="0" FontSize="10" />
             </StackPanel>
             <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,10,0" Orientation="Vertical">

@@ -39,5 +39,7 @@ namespace BushDiversTracker.Models
         public int IsEmpty { get; set; }
         [JsonPropertyName("tour")]
         public string? Tour { get; set; }
+        [JsonPropertyName("cargo")]
+        public DispatchCargo[] Cargo { get; set; }
     }
 }
