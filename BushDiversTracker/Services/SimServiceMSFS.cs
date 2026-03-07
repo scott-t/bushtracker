@@ -38,13 +38,13 @@ namespace BushDiversTracker.Services
                 public const int MAIN_MENU = 32;
                 public const int WORLD_MAP = 12;
             }
-           
+
         }
 
         // sim connect setup variables
         SimConnect simConnect = null;
         const int WM_USER_SIMCONNECT = 0x0402;
-                
+
         private SimVersion? version = null;
         public SimVersion? Version { get => version; }
 
@@ -80,7 +80,7 @@ namespace BushDiversTracker.Services
         //    EVENT_PAUSED,
         //    EVENT_UNPAUSED,
         //}
-        
+
         // Sim variables
 
         public SimServiceMSFS(MainWindow mainWindow)
@@ -331,7 +331,7 @@ namespace BushDiversTracker.Services
         {
             // Already connected
             if (simConnect != null)
-                return; 
+                return;
 
             try
             {
@@ -452,14 +452,20 @@ namespace BushDiversTracker.Services
         /// 
         private void ApplyAircraftHacks(ref SimSettingsData data)
         {
-            // A2A Aerostar - payload stations include engine oil weight
-            if (data.aircraft_name.StartsWith("a2a piper aerostar", StringComparison.OrdinalIgnoreCase))
+            // A2A Aerostar and A2A Comanche - payload stations include engine oil weight
+            if (data.aircraft_name.StartsWith("a2a piper", StringComparison.OrdinalIgnoreCase))
             {
+                // List of known 'fake' stations
+                string[] blacklist = { " oil", " mods", "prop", " tank" };
                 for (int i = 0; i < data.payload_station_count; i++)
                 {
-                    if (data.payload_station_name[i].value.EndsWith(" oil", StringComparison.OrdinalIgnoreCase))
+                    foreach (string black in blacklist)
                     {
-                        data.payload_station_weight[i] = 0;
+                        if (data.payload_station_name[i].value.EndsWith(black, StringComparison.OrdinalIgnoreCase))
+                        {
+                            data.payload_station_weight[i] = 0;
+                            break;
+                        }
                     }
                 }
             }
