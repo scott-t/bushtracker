@@ -231,7 +231,7 @@ namespace BushDiversTracker
             bool isMetric = rdoUnitMetric.IsChecked == true;
             if (weight < 0)
                 return "N/A";
-            return isMetric ? weight.ToString("0.# kg") : weight.ToString("0 lbs");
+            return isMetric ? HelperService.LbsToKG(weight).ToString("0.# kg") : weight.ToString("0 lbs");
         }
 
         private async void btnFetchBookings_Click(object sender, RoutedEventArgs e)
