@@ -526,7 +526,7 @@ namespace BushDiversTracker.Services
         {
             if (simFlightSettings?.aircraft_name != data.aircraft_name)
             {
-                HelperService.WriteToLog($"Aircraft selected: {data.aircraft_name} {data.atcModel} {data.atcType}");
+                HelperService.WriteToLog($"Aircraft selected: {data.aircraft_name} {data.atcModel} {data.atcType}, {data.payload_station_count} payload stations");
                 for (int i = 0; i < data.payload_station_count; ++i)
                     HelperService.WriteToLog($"Payload station {i+1}: {data.payload_station_name[i]}");
             }

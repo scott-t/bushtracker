@@ -12,7 +12,8 @@ namespace BushDiversTracker.Models.NonApi
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
     public struct SimSettingsData
     {
-        public const int MAX_PAYLOAD_STATIONS = 15;
+        // Some aircraft go beyond the SDK 'limit' of 15
+        public const int MAX_PAYLOAD_STATIONS = 25;
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
         public struct MarshalledString
