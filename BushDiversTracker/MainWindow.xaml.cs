@@ -31,6 +31,7 @@ namespace BushDiversTracker
             Neutral,
             Error
         }
+        System.Windows.Forms.NotifyIcon _notifyIcon;
 
         public MainWindow()
         {
@@ -96,12 +97,22 @@ namespace BushDiversTracker
             _tracker.OnDispatchError += Tracker_OnDispatchError;
             _tracker.OnSetDispatch += Tracker_SetDispatchData;
             _tracker.OnStatusMessage += (sender, message) => SetStatusMessage(message.Message, message.State);
+            _notifyIcon = new System.Windows.Forms.NotifyIcon();
+            _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
+            _notifyIcon.Text = "Bush Tracker";
+            _notifyIcon.Visible = false;
+            _notifyIcon.DoubleClick += delegate
+            {
+                Show();
+                WindowState = WindowState.Normal;
+            };
 
             lblTrackerStatus.Content = "Not tracking";
             lblFlightStatus.Visibility = Visibility.Hidden;
 
             chkAutoStart.IsChecked = Settings.Default.AutoStart;
             chkTextToSim.IsChecked = Settings.Default.ShowSimText;
+            chkMinToTray.IsChecked = Settings.Default.MinToTray;
         }
 
         #region SimConnect
@@ -154,6 +165,11 @@ namespace BushDiversTracker
                     chkAutoStart.IsEnabled = true;
                     lblFlightStatus.Visibility = Visibility.Hidden;
                     lblTrackerStatus.Content = "Not tracking";
+                    if (WindowState == WindowState.Minimized)
+                    {
+                        Show();
+                        WindowState = WindowState.Normal;
+                    }
                     break;
 
                 case TrackerState.HasDispatch:
@@ -499,6 +515,19 @@ namespace BushDiversTracker
             _simConnect?.OpenConnection();
         }
 
+        private void Window_StateChanged(object sender, EventArgs e)
+        {
+            if (WindowState == WindowState.Minimized && Settings.Default.MinToTray)
+            {
+                Hide();
+                _notifyIcon?.Visible = true;
+            }
+            else
+            {
+                _notifyIcon?.Visible = false;
+            }
+        }
+
         private void chkAutoStart_Checked(object sender, RoutedEventArgs e)
         {
             _tracker.AllowStart = chkAutoStart.IsChecked == true;
@@ -518,6 +547,11 @@ namespace BushDiversTracker
         {
             _simConnect.SendSimText = chkTextToSim.IsChecked == true;
             Settings.Default.ShowSimText = chkTextToSim.IsChecked == true;
+        }
+
+        private void chkToTray_Checked(object sender, RoutedEventArgs e)
+        {
+            Settings.Default.MinToTray = chkMinToTray.IsChecked == true;
         }
     }
 }
