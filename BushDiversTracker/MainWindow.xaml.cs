@@ -24,13 +24,6 @@ namespace BushDiversTracker
         AddonBrowser _addonBrowser;
         ISimService _simConnect;
         TrackerService _tracker;
-
-        internal enum MessageState
-        {
-            OK,
-            Neutral,
-            Error
-        }
         System.Windows.Forms.NotifyIcon _notifyIcon;
 
         public MainWindow()
@@ -91,12 +84,15 @@ namespace BushDiversTracker
                 _simConnect.OnSimDataReceived += SimConnect_OnSimDataReceived;
             }
 
-            _tracker = new TrackerService(this, _simConnect, _api);
+            _tracker = new TrackerService(_simConnect, _api);
             _tracker.OnTrackerStateChanged += Tracker_OnStateChange;
             _tracker.OnFlightStatusChanged += Tracker_OnFlightStatusChange;
             _tracker.OnDispatchError += Tracker_OnDispatchError;
             _tracker.OnSetDispatch += Tracker_SetDispatchData;
-            _tracker.OnStatusMessage += (sender, message) => SetStatusMessage(message.Message, message.State);
+            _tracker.OnStatusMessage += (_, e) => SetStatusMessage(e.Message, e.State);
+            _tracker.OnAlert += (_, e) => MessageBox.Show(this, e.Message, e.Title, MessageBoxButton.OK, MessageBoxImage.Information);
+            _tracker.OnDistanceUpdated += (_, d) => lblDistance.Content = d.ToString("0.## nm");
+
             _notifyIcon = new System.Windows.Forms.NotifyIcon();
             _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
             _notifyIcon.Text = "Bush Tracker";
@@ -130,6 +126,7 @@ namespace BushDiversTracker
             elConnection.Fill = Brushes.Red;
             elConnection.Stroke = Brushes.Red;
             btnConnect.IsEnabled = true;
+            SetStatusMessage("Not connected — is the sim running?", MessageState.Error);
         }
 
         private void SimConnect_OnSimDataReceived(object sender, SimData data)

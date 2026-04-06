@@ -3,9 +3,7 @@ using BushDiversTracker.Models.NonApi;
 using BushDiversTracker.Models;
 using System;
 using System.Threading.Tasks;
-using System.Windows;
 using BushDiversTracker.Properties;
-using Windows.Data.Text;
 
 namespace BushDiversTracker.Services
 {
@@ -16,7 +14,14 @@ namespace BushDiversTracker.Services
         public struct MessageEventArgs
         {
             public string Message { get; set; }
-            public MainWindow.MessageState State { get; set; }
+            public MessageState State { get; set; }
+        }
+
+        public enum MessageState
+        {
+            OK,
+            Neutral,
+            Error
         }
 
         public event EventHandler<TrackingStartErrorArgs> OnDispatchError;
@@ -41,6 +46,13 @@ namespace BushDiversTracker.Services
 
         public event EventHandler<Dispatch> OnSetDispatch;
 
+        public event EventHandler<AlertEventArgs> OnAlert;
+        public struct AlertEventArgs
+        {
+            public string Message { get; init; }
+            public string Title   { get; init; }
+        }
+
         private TrackerState state = TrackerState.None;
         public TrackerState State { get => state; }
         public bool AllowStart = Settings.Default.AutoStart;
@@ -49,6 +61,9 @@ namespace BushDiversTracker.Services
 
         private Dispatch dispatchData = null;
         public Dispatch Dispatch { get => dispatchData; }
+
+        public double Distance => currentDistance;
+        public event EventHandler<double> OnDistanceUpdated;
 
         private double currentDistance = 0;
         private double startFuelQty;
@@ -79,13 +94,11 @@ namespace BushDiversTracker.Services
 
         protected DateTime dataLastSent;
 
-        private readonly MainWindow _mainWindow = null;
         private readonly APIService _api = null;
         private ISimService _sim = null;
 
-        public TrackerService(MainWindow mainWindow, ISimService simService, APIService api)
+        public TrackerService(ISimService simService, APIService api)
         {
-            _mainWindow = mainWindow;
             _api = api;
             SetSimService(simService);
         }
@@ -123,14 +136,14 @@ namespace BushDiversTracker.Services
                     else if (!await _api.CancelTrackingAsync())
                         throw new Exception("Error resetting on server");
 
-                    _mainWindow.SetStatusMessage(state == TrackerState.Shutdown ? "Dispatch submitted" : "Ok");
+                    OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = state == TrackerState.Shutdown ? "Dispatch submitted" : "Ok" });
                     SetDispatchAndReset(null);
                 }
                 return true;
             }
             catch (Exception ex)
             {
-                _mainWindow.SetStatusMessage("Error cancelling tracking: " + ex.Message, MainWindow.MessageState.Error);
+                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Error cancelling tracking: " + ex.Message, State = MessageState.Error });
             }
 
             return false;
@@ -165,8 +178,7 @@ namespace BushDiversTracker.Services
             }
             catch (Exception)
             {
-                //_mainWindow.SetStatusMessage(e.Message, MainWindow.MessageState.Error);
-                _mainWindow.SetStatusMessage("No airport within 2NM", MainWindow.MessageState.Error);
+                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "No airport within 2NM", State = MessageState.Error });
                 return false;
             }
 
@@ -189,15 +201,15 @@ namespace BushDiversTracker.Services
 
             if (AllowEngineHotstart && Math.Abs(lastSimData.surface_rel_groundspeed) > 10)
             {
-                _mainWindow.SetStatusMessage("Aircraft not stationary", MainWindow.MessageState.Error);
+                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Aircraft not stationary", State = MessageState.Error });
                 return false;
             }
 
             // Check we're at a landing airport
             if (!await CheckAndDivert())
             {
-                MessageBox.Show(_mainWindow, "Unable to find landing airport.\n\nPlease resume flying and land within 2NM of an airport", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
-                _mainWindow.SetStatusMessage("No airport within 2NM", MainWindow.MessageState.Error);
+                OnAlert?.Invoke(this, new AlertEventArgs { Message = "Unable to find landing airport.\n\nPlease resume flying and land within 2NM of an airport", Title = "Bush Tracker" });
+                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "No airport within 2NM", State = MessageState.Error });
                 return false;
             }
 
@@ -229,17 +241,17 @@ namespace BushDiversTracker.Services
             }
             catch (Exception)
             {
-                _mainWindow.SetStatusMessage("Error submitting pirep", MainWindow.MessageState.Error);
+                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Error submitting pirep", State = MessageState.Error });
             }
 
             if (res)
             {
-                _mainWindow.SetStatusMessage("Pirep submitted", MainWindow.MessageState.OK);
+                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Pirep submitted", State = MessageState.OK });
                 SetDispatchAndReset(null);
             }
             else
             {
-                MessageBox.Show(_mainWindow, "Pirep Not Submitted!", "Bush Tracker", MessageBoxButton.OK, MessageBoxImage.Error);
+                OnAlert?.Invoke(this, new AlertEventArgs { Message = "Pirep Not Submitted!", Title = "Bush Tracker" });
             }
 
             return res;
@@ -298,12 +310,12 @@ namespace BushDiversTracker.Services
                 Task<bool> task = _api.CancelTrackingAsync();
 
                 SetTrackerState(TrackerState.None);
-                MessageBox.Show(_mainWindow, "It looks like you have abandoned your flight, tracking will now stop and your progress cancelled.\nYour aircraft or game settings has been modified.", "Bush Divers", MessageBoxButton.OK);
+                OnAlert?.Invoke(this, new AlertEventArgs { Message = "It looks like you have abandoned your flight, tracking will now stop and your progress cancelled.\nYour aircraft or game settings has been modified.", Title = "Bush Divers" });
 
                 await task;
                 if (task.IsCompletedSuccessfully && task.Result)
                 {
-                    _mainWindow.SetStatusMessage("Tracking stopped");
+                    OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Tracking stopped" });
                     SetDispatchAndReset(null);
                 }
                 return;
@@ -322,7 +334,7 @@ namespace BushDiversTracker.Services
                 {
                     if (!AllowStart)
                     {
-                        _mainWindow.SetStatusMessage("Waiting for start checkbox", MainWindow.MessageState.Neutral);
+                        OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Waiting for start checkbox", State = MessageState.Neutral });
                     }
                     else
                     {
@@ -330,7 +342,7 @@ namespace BushDiversTracker.Services
                         engineHotstart = data.EnginesRunning;
 
                         SetTrackerState(TrackerState.ReadyToStart);
-                        _mainWindow.SetStatusMessage("Pre-flight|Loading");
+                        OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Pre-flight|Loading" });
                         _sim.SendTextToSim("Bush Tracker Status: Pre-Flight - Ready");
 
                         // Clear landing rate so next change event as per simconnect is viewed as 'new'
@@ -367,7 +379,7 @@ namespace BushDiversTracker.Services
                     {
                         FlightStatus = PirepStatusType.DEPARTED;
                         _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.DEPARTED });
-                        _mainWindow.SetStatusMessage("Departed");
+                        OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Departed" });
                         _sim.SendTextToSim("Bush Tracker Status: Departed - Have a good flight!");
                     }
                 }
@@ -375,7 +387,7 @@ namespace BushDiversTracker.Services
                 {
                     FlightStatus = PirepStatusType.CRUISE;
                     _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.CRUISE });
-                    _mainWindow.SetStatusMessage("Cruise");
+                    OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Cruise" });
                 }
                 else if (FlightStatus == PirepStatusType.CRUISE)
                 {
@@ -409,7 +421,7 @@ namespace BushDiversTracker.Services
                         FlightStatus = PirepStatusType.LANDED;
                         _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.LANDED });
 
-                        _mainWindow.SetStatusMessage("Landed");
+                        OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Landed" });
                         _sim.SendTextToSim("Bush Tracker Status: Landed");
                     }
                 }
@@ -419,7 +431,7 @@ namespace BushDiversTracker.Services
                     {
                         FlightStatus = PirepStatusType.CRUISE;
                         _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.CRUISE });
-                        _mainWindow.SetStatusMessage("Cruise");
+                        OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Cruise" });
                     }
                     else if (!data.EnginesRunning && Math.Abs(data.surface_rel_groundspeed) < 15)
                     {
@@ -428,7 +440,7 @@ namespace BushDiversTracker.Services
 
                         _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.ARRIVED });
 
-                        _mainWindow.SetStatusMessage("Flight ended");
+                        OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Flight ended" });
                         _sim.SendTextToSim("Bush Tracker Status: Flight ended - Thanks for working with Bush Divers");
 
                         endFuelQty = data.fuel_qty;
@@ -447,7 +459,7 @@ namespace BushDiversTracker.Services
                 {
                     SetTrackerState(TrackerState.InFlight);
                     FlightStatus = PirepStatusType.LANDED;
-                    _mainWindow.SetStatusMessage("Landed");
+                    OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Landed" });
                     _ = _api.PostPirepStatusAsync(new PirepStatus { PirepId = dispatchData.Id, Status = (int)PirepStatusType.LANDED });
                 }
             }
@@ -475,12 +487,12 @@ namespace BushDiversTracker.Services
                             Task<bool> task = _api.CancelTrackingAsync();
 
                             SetTrackerState(TrackerState.None);
-                            MessageBox.Show(_mainWindow, "It looks like you have abandoned your flight, tracking will now stop and your progress cancelled." + "\n" + "You can start your flight again by returning to the departure location", "Bush Divers", MessageBoxButton.OK);
+                            OnAlert?.Invoke(this, new AlertEventArgs { Message = "It looks like you have abandoned your flight, tracking will now stop and your progress cancelled.\nYou can start your flight again by returning to the departure location", Title = "Bush Divers" });
 
                             await task;
                             if (task.IsCompletedSuccessfully && task.Result)
                             {
-                                _mainWindow.SetStatusMessage("Tracking stopped");
+                                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Tracking stopped" });
                                 SetDispatchAndReset(null);
                             }
                         }
@@ -488,7 +500,6 @@ namespace BushDiversTracker.Services
                         return;
                     }
                     currentDistance += d;
-                    _mainWindow.lblDistance.Content = currentDistance.ToString("0.## nm"); // TODO: event?
                 }
                 else
                     currentDistance = 0.0;
@@ -500,6 +511,7 @@ namespace BushDiversTracker.Services
                 if (headingChanged || altChanged || DateTime.UtcNow > dataLastSent.AddSeconds(60))
                 {
                     _ = SendFlightLog(data);
+                    OnDistanceUpdated?.Invoke(this, currentDistance);
                     dataLastSent = DateTime.UtcNow;
                 }
             }
@@ -627,13 +639,13 @@ namespace BushDiversTracker.Services
                 && !settingsError;
 
             if (!isInSim)
-                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Waiting for world to load", State = MainWindow.MessageState.Error });
+                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Waiting for world to load", State = MessageState.Error });
             else if (!readyToStart)
-                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Start conditions not met", State = MainWindow.MessageState.Error });
+                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Start conditions not met", State = MessageState.Error });
             else if (data.CurrentEngineStatus)
-                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Shutdown engines before starting", State = MainWindow.MessageState.Error });
+                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Shutdown engines before starting", State = MessageState.Error });
             else
-                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Ready to start", State = MainWindow.MessageState.OK });
+                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Ready to start", State = MessageState.OK });
 
             return readyToStart && !data.CurrentEngineStatus && isInSim;
         }
@@ -663,11 +675,11 @@ namespace BushDiversTracker.Services
             try
             {
                 await _api.PostFlightLogAsync(log);
-                _mainWindow.SetStatusMessage("Flight log updated", MainWindow.MessageState.OK);
+                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Flight log updated", State = MessageState.OK });
             }
             catch (Exception e)
             {
-                _mainWindow.SetStatusMessage("Error submitting flight update: " + e.Message, MainWindow.MessageState.Error);
+                OnStatusMessage?.Invoke(this, new MessageEventArgs { Message = "Error submitting flight update: " + e.Message, State = MessageState.Error });
             }
         }
 

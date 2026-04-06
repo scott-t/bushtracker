@@ -361,8 +361,6 @@ namespace BushDiversTracker.Services
             }
             catch (COMException ex)
             {
-                //HelperService.WriteToLog($"Issue connecting to sim: {ex.Message}");
-                _mainWindow.SetStatusMessage($"Issue connecting to sim. Is sim running?", MainWindow.MessageState.Error);
                 OnSimDisconnected?.Invoke(this, EventArgs.Empty);
             }
         }
