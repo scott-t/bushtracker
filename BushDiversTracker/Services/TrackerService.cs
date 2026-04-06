@@ -559,7 +559,9 @@ namespace BushDiversTracker.Services
 
             if (dispatchData != null && !WeightValid(data.total_weight, (double)dispatchData.TotalPayload))
             {
-                bool mustInvalidate = (!data.IsHelicopter || lastSimData.alt_above_ground > 100 || !AllowHeliSlings);
+                // TODO: If we ever do airdrop missions, this needs adjusting. or we need to dynamically adjust dispatchdata total payload
+                bool mustInvalidate = (!data.IsHelicopter || lastSimData.alt_above_ground > 100 || !AllowHeliSlings) 
+                    && lastSimData.EnginesRunning;
                 if (mustInvalidate)
                     bFlightSettingsInvalidated = true;
                 
@@ -572,7 +574,7 @@ namespace BushDiversTracker.Services
                             HelperService.WriteToLog($"{data.payload_station_name[i]} from {simFlightSettings?.payload_station_weight[i]} to {data.payload_station_weight[i]}");
                     }
                     if (!mustInvalidate)
-                        HelperService.WriteToLog("Not invalidating due to helicopter tolerance");
+                        HelperService.WriteToLog("Not invalidating due to helicopter or engine status");
                 }
             }
 
